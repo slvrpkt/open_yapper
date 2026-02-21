@@ -11,6 +11,8 @@ dependencies:
     sdk: flutter
   material_symbols_icons: ^4.2906.0
   shared_preferences: ^2.2.2
+  speech_to_text: ^7.3.0
+  hotkey_manager: ^0.2.3
 
 dev_dependencies:
   flutter_test:
