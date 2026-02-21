@@ -15,8 +15,10 @@ export function Footer() {
             Ready to yap?
           </h2>
           <motion.a
-            href="/open_yapper.dmg"
+            href="https://github.com/Matinrahimik/open_yapper/releases/latest/download/open_yapper.dmg"
             download="Open Yapper.dmg"
+            target="_blank"
+            rel="noopener noreferrer"
             className="flex items-center gap-2 rounded-full border-2 border-[#D4FF00] bg-[#0A0A0A] px-8 py-4 text-lg font-bold uppercase text-[#D4FF00] shadow-[6px_6px_0_0_#D4FF00] transition-all hover:-translate-y-1 hover:shadow-[8px_8px_0_0_#D4FF00]"
             style={{ fontFamily: "var(--font-anton), sans-serif" }}
             whileHover={{ scale: 1.02 }}
