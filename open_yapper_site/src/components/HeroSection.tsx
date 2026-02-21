@@ -54,15 +54,16 @@ export function HeroSection() {
           Ramble naturally—AI cleans the mess—paste anywhere.
         </p>
 
-        <motion.button
-          type="button"
+        <motion.a
+          href="/open_yapper.dmg"
+          download="Open Yapper.dmg"
           className="mt-12 flex items-center gap-2 rounded-full border-2 border-[#0A0A0A] bg-[#D4FF00] px-8 py-4 text-lg font-medium uppercase tracking-[0.15em] text-[#0A0A0A] shadow-[6px_6px_0_0_#0A0A0A] transition-all hover:-translate-y-1 hover:shadow-[8px_8px_0_0_#0A0A0A]"
           style={{ fontFamily: "var(--font-anton), sans-serif" }}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
         >
           Download Open Yapper now
-        </motion.button>
+        </motion.a>
       </motion.div>
     </section>
   );

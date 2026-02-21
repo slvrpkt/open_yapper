@@ -14,8 +14,9 @@ export function Footer() {
           >
             Ready to yap?
           </h2>
-          <motion.button
-            type="button"
+          <motion.a
+            href="/open_yapper.dmg"
+            download="Open Yapper.dmg"
             className="flex items-center gap-2 rounded-full border-2 border-[#D4FF00] bg-[#0A0A0A] px-8 py-4 text-lg font-bold uppercase text-[#D4FF00] shadow-[6px_6px_0_0_#D4FF00] transition-all hover:-translate-y-1 hover:shadow-[8px_8px_0_0_#D4FF00]"
             style={{ fontFamily: "var(--font-anton), sans-serif" }}
             whileHover={{ scale: 1.02 }}
@@ -23,7 +24,7 @@ export function Footer() {
           >
             Get Open Yapper Free
             <ArrowRight className="h-5 w-5 text-[#D4FF00]" aria-hidden />
-          </motion.button>
+          </motion.a>
         </div>
         <div className="flex flex-col items-center gap-3 text-center md:items-end md:text-right">
           <p className="text-base font-medium text-gray-300">

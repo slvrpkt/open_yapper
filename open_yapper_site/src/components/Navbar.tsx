@@ -10,12 +10,13 @@ export function Navbar() {
         OpenYapper
       </a>
       <div className="flex flex-1 items-center justify-end">
-        <button
-          type="button"
+        <a
+          href="/open_yapper.dmg"
+          download="Open Yapper.dmg"
           className="rounded-full border-2 border-[#0A0A0A] bg-[#D4FF00] px-6 py-2.5 font-semibold text-[#0A0A0A] shadow-[4px_4px_0_0_#0A0A0A] transition-all hover:-translate-y-0.5 hover:shadow-[6px_6px_0_0_#0A0A0A]"
         >
           Start yapping now
-        </button>
+        </a>
       </div>
     </nav>
   );
