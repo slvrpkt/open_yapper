@@ -44,15 +44,26 @@ class _MainScaffoldState extends State<MainScaffold> {
   }
 
   Future<void> _loadRailState() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _railExtended = prefs.getBool(_railExtendedKey) ?? true;
-    });
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (mounted) {
+        setState(() {
+          _railExtended = prefs.getBool(_railExtendedKey) ?? true;
+        });
+      }
+    } catch (_) {
+      // SharedPreferences may not be available (e.g. web, some IDEs)
+      // Keep default: rail extended
+    }
   }
 
   Future<void> _saveRailState(bool extended) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_railExtendedKey, extended);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_railExtendedKey, extended);
+    } catch (_) {
+      // Silently ignore if persistence isn't available
+    }
   }
 
   void _toggleRail() {
@@ -69,12 +80,16 @@ class _MainScaffoldState extends State<MainScaffold> {
         children: [
           NavigationRail(
             extended: _railExtended,
-            leading: IconButton(
-              icon: Icon(
-                _railExtended ? Icons.chevron_left : Icons.chevron_right,
+            leading: Padding(
+              padding: const EdgeInsets.only(left: 12),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: IconButton(
+                  icon: const Icon(Icons.view_sidebar),
+                  onPressed: _toggleRail,
+                  tooltip: _railExtended ? 'Minimize' : 'Expand',
+                ),
               ),
-              onPressed: _toggleRail,
-              tooltip: _railExtended ? 'Minimize' : 'Expand',
             ),
             destinations: const [
               NavigationRailDestination(
