@@ -1,15 +1,46 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'keychain_service.dart';
+import 'prompt_builder.dart';
 
 const _geminiApiKeyKey = 'gemini_api_key';
-const _systemPromptKey = 'system_prompt';
-const _geminiModelKey = 'gemini_model';
 const _onboardingCompletedKey = 'onboarding_completed';
+const _appTonePrefix = 'app_tone_';
+const _appPromptPrefix = 'app_prompt_';
+const _hotkeyStartKeyCodeKey = 'hotkey_start_keycode';
+const _hotkeyStartFlagsKey = 'hotkey_start_flags';
+const _hotkeyStopKeyCodeKey = 'hotkey_stop_keycode';
+const _hotkeyStopFlagsKey = 'hotkey_stop_flags';
+const _hotkeyHoldKeyCodeKey = 'hotkey_hold_keycode';
+const _hotkeyHoldFlagsKey = 'hotkey_hold_flags';
 
-const _defaultSystemPrompt =
-    'You are a helpful assistant. The user is dictating via voice. '
-    'Respond with only the text to paste. No preamble, no markdown.';
+/// Hotkey configuration for global shortcuts.
+class HotkeyConfig {
+  const HotkeyConfig({
+    required this.startKeyCode,
+    required this.startFlags,
+    required this.stopKeyCode,
+    required this.stopFlags,
+    required this.holdKeyCode,
+    required this.holdFlags,
+  });
+
+  final int startKeyCode;
+  final int startFlags;
+  final int stopKeyCode;
+  final int stopFlags;
+  final int holdKeyCode;
+  final int holdFlags;
+
+  static const HotkeyConfig defaultConfig = HotkeyConfig(
+    startKeyCode: 49, // kVK_Space
+    startFlags: 0x80000, // maskAlternate (Option)
+    stopKeyCode: 36, // kVK_Return
+    stopFlags: 0x80000, // maskAlternate (Option)
+    holdKeyCode: 49, // kVK_Space
+    holdFlags: 0x40000, // maskControl (Control) - avoids Cmd+Space (Spotlight)
+  );
+}
 
 /// Loads the stored Gemini API key (Keychain first, with migration from SharedPreferences).
 Future<String?> loadGeminiApiKey() async {
@@ -35,36 +66,89 @@ Future<void> saveGeminiApiKey(String key) async {
   await saveGeminiApiKeyToKeychain(key);
 }
 
-/// Loads the system prompt.
-Future<String> loadSystemPrompt() async {
+/// Loads the tone for a specific app. Returns default when not configured.
+Future<String> loadAppTone(String appName) async {
   try {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_systemPromptKey) ?? _defaultSystemPrompt;
+    final key = '$_appTonePrefix$appName';
+    final tone = prefs.getString(key);
+    if (tone != null && PromptBuilder.validTones.contains(tone)) {
+      return tone;
+    }
+    return PromptBuilder.validTones[1]; // 'normal'
   } catch (_) {
-    return _defaultSystemPrompt;
+    return PromptBuilder.validTones[1];
   }
 }
 
-/// Saves the system prompt.
-Future<void> saveSystemPrompt(String prompt) async {
-  final prefs = await SharedPreferences.getInstance();
-  await prefs.setString(_systemPromptKey, prompt);
-}
-
-/// Loads the Gemini model.
-Future<String> loadGeminiModel() async {
+/// Saves the tone for a specific app.
+Future<void> saveAppTone(String appName, String tone) async {
   try {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_geminiModelKey) ?? 'gemini-2.0-flash';
+    final key = '$_appTonePrefix$appName';
+    await prefs.setString(key, tone);
+  } catch (_) {}
+}
+
+/// Loads the custom prompt for a specific app. Returns null when not set.
+Future<String?> loadAppPrompt(String appName) async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('$_appPromptPrefix$appName');
   } catch (_) {
-    return 'gemini-2.0-flash';
+    return null;
   }
 }
 
-/// Saves the Gemini model.
-Future<void> saveGeminiModel(String model) async {
-  final prefs = await SharedPreferences.getInstance();
-  await prefs.setString(_geminiModelKey, model);
+/// Saves the custom prompt for a specific app.
+Future<void> saveAppPrompt(String appName, String? prompt) async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    final key = '$_appPromptPrefix$appName';
+    if (prompt == null || prompt.isEmpty) {
+      await prefs.remove(key);
+    } else {
+      await prefs.setString(key, prompt);
+    }
+  } catch (_) {}
+}
+
+/// Loads all app prompt overrides for the Customization UI.
+Future<Map<String, String>> loadAllAppPrompts() async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    final keys = prefs.getKeys().where((k) => k.startsWith(_appPromptPrefix));
+    final map = <String, String>{};
+    for (final k in keys) {
+      final appName = k.substring(_appPromptPrefix.length);
+      final prompt = prefs.getString(k);
+      if (prompt != null && prompt.isNotEmpty) {
+        map[appName] = prompt;
+      }
+    }
+    return map;
+  } catch (_) {
+    return {};
+  }
+}
+
+/// Loads all app tone overrides for the Customization UI.
+Future<Map<String, String>> loadAllAppTones() async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    final keys = prefs.getKeys().where((k) => k.startsWith(_appTonePrefix));
+    final map = <String, String>{};
+    for (final k in keys) {
+      final appName = k.substring(_appTonePrefix.length);
+      final tone = prefs.getString(k);
+      if (tone != null && PromptBuilder.validTones.contains(tone)) {
+        map[appName] = tone;
+      }
+    }
+    return map;
+  } catch (_) {
+    return {};
+  }
 }
 
 /// Whether onboarding (permissions screen) has been completed.
@@ -82,5 +166,48 @@ Future<void> setOnboardingCompleted(bool value) async {
   try {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_onboardingCompletedKey, value);
+  } catch (_) {}
+}
+
+/// Loads the stored hotkey configuration.
+Future<HotkeyConfig> loadHotkeyConfig() async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    final startKeyCode = prefs.getInt(_hotkeyStartKeyCodeKey);
+    final startFlags = prefs.getInt(_hotkeyStartFlagsKey);
+    final stopKeyCode = prefs.getInt(_hotkeyStopKeyCodeKey);
+    final stopFlags = prefs.getInt(_hotkeyStopFlagsKey);
+    final holdKeyCode = prefs.getInt(_hotkeyHoldKeyCodeKey);
+    final holdFlags = prefs.getInt(_hotkeyHoldFlagsKey);
+
+    if (startKeyCode != null &&
+        startFlags != null &&
+        stopKeyCode != null &&
+        stopFlags != null &&
+        holdKeyCode != null &&
+        holdFlags != null) {
+      return HotkeyConfig(
+        startKeyCode: startKeyCode,
+        startFlags: startFlags,
+        stopKeyCode: stopKeyCode,
+        stopFlags: stopFlags,
+        holdKeyCode: holdKeyCode,
+        holdFlags: holdFlags,
+      );
+    }
+  } catch (_) {}
+  return HotkeyConfig.defaultConfig;
+}
+
+/// Saves the hotkey configuration.
+Future<void> saveHotkeyConfig(HotkeyConfig config) async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_hotkeyStartKeyCodeKey, config.startKeyCode);
+    await prefs.setInt(_hotkeyStartFlagsKey, config.startFlags);
+    await prefs.setInt(_hotkeyStopKeyCodeKey, config.stopKeyCode);
+    await prefs.setInt(_hotkeyStopFlagsKey, config.stopFlags);
+    await prefs.setInt(_hotkeyHoldKeyCodeKey, config.holdKeyCode);
+    await prefs.setInt(_hotkeyHoldFlagsKey, config.holdFlags);
   } catch (_) {}
 }

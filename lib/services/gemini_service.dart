@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 
 class GeminiService {
-  GeminiService({required this.apiKey, this.model = 'gemini-2.0-flash'});
+  GeminiService({required this.apiKey, this.model = 'gemini-flash-lite-latest'});
 
   final String apiKey;
   final String model;
@@ -33,7 +33,7 @@ class GeminiService {
       ],
       'generationConfig': {
         'temperature': 0.7,
-        'max_output_tokens': 2048,
+        'thinkingConfig': {'thinkingBudget': 0},
       }
     });
 
@@ -73,7 +73,7 @@ class GeminiService {
       ],
       'generationConfig': {
         'temperature': 0.7,
-        'max_output_tokens': 2048,
+        'thinkingConfig': {'thinkingBudget': 0},
       }
     });
 

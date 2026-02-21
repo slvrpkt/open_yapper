@@ -6,12 +6,28 @@ class NativeBridge {
   static final NativeBridge instance = NativeBridge._();
   NativeBridge._();
 
+  VoidCallback? _onHotkeyPressed;
+  VoidCallback? _onCancelRequested;
+
   /// Set up the callback for when the global hotkey is pressed.
   /// The native side invokes "onHotkeyPressed" when the user presses the hotkey.
   void setHotkeyCallback(VoidCallback onPressed) {
+    _onHotkeyPressed = onPressed;
+    _installChannelHandler();
+  }
+
+  /// Set up the callback for when the user taps the escape button on the overlay.
+  void setCancelCallback(VoidCallback onCancel) {
+    _onCancelRequested = onCancel;
+    _installChannelHandler();
+  }
+
+  void _installChannelHandler() {
     _channel.setMethodCallHandler((call) async {
       if (call.method == 'onHotkeyPressed') {
-        onPressed();
+        _onHotkeyPressed?.call();
+      } else if (call.method == 'onCancelRequested') {
+        _onCancelRequested?.call();
       }
       return null;
     });
@@ -34,6 +50,19 @@ class NativeBridge {
 
   Future<String?> getFrontmostAppName() async {
     return await _channel.invokeMethod<String>('getFrontmostAppName');
+  }
+
+  /// Returns list of installed apps with name and base64 PNG icon.
+  /// Each map: {name: String, path: String, iconBase64: String}
+  Future<List<Map<String, dynamic>>> getInstalledApps() async {
+    final result = await _channel.invokeMethod<List<dynamic>>('getInstalledApps');
+    if (result == null) return [];
+    return result
+        .map((e) => (e as Map<dynamic, dynamic>).map(
+              (k, v) => MapEntry(k.toString(), v),
+            ))
+        .map((m) => Map<String, dynamic>.from(m))
+        .toList();
   }
 
   Future<bool> checkAccessibility() async {

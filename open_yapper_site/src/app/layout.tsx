@@ -19,6 +19,10 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://openyapper.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png",
+  },
   title: "Open Yapper - Stop Typing, Start Talking",
   description:
     "Voice dictation that removes filler words and refines your text. Ramble naturally, AI cleans the mess, paste anywhere.",

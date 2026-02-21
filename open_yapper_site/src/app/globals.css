@@ -31,7 +31,7 @@ html {
 }
 
 .animate-marquee {
-  animation: marquee 60s linear infinite;
+  animation: marquee 150s linear infinite;
 }
 
 ::selection {

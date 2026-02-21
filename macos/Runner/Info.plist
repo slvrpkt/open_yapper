@@ -33,6 +33,7 @@
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>x-apple.systempreferences</string>
+		<string>x-apple.systemsettings</string>
 	</array>
 </dict>
 </plist>

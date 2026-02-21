@@ -3,7 +3,8 @@ import 'package:material_symbols_icons/symbols.dart';
 
 import 'screens/customization_screen.dart';
 import 'screens/history_screen.dart';
-import 'screens/home_screen.dart';
+// import 'screens/home_screen.dart'; // Commented out - History is main page
+import 'screens/settings_screen.dart';
 import 'views/onboarding_view.dart';
 import 'widgets/screen_container.dart';
 import 'services/native_bridge.dart';
@@ -19,11 +20,11 @@ void main() async {
   final recordingService = RecordingService(
     historyService: historyService,
     loadApiKey: loadGeminiApiKey,
-    loadSystemPrompt: loadSystemPrompt,
-    loadModel: loadGeminiModel,
+    loadModel: () async => 'gemini-flash-lite-latest',
   );
 
   NativeBridge.instance.setHotkeyCallback(() => recordingService.toggleRecording());
+  NativeBridge.instance.setCancelCallback(() => recordingService.cancelRecordingOrProcessing());
 
   runApp(
     MainApp(
@@ -64,7 +65,7 @@ class MainApp extends StatelessWidget {
   }
 }
 
-enum RailDestination { home, history, customization }
+enum RailDestination { history, customization, settings }
 
 class AppSidebar extends StatelessWidget {
   const AppSidebar({
@@ -90,17 +91,6 @@ class AppSidebar extends StatelessWidget {
           NavigationRailDestination(
             icon: IconTheme(
               data: IconThemeData(color: colorScheme.onSurfaceVariant),
-              child: const Tooltip(message: 'Home', child: Icon(Symbols.home)),
-            ),
-            selectedIcon: const Tooltip(
-              message: 'Home',
-              child: Icon(Symbols.home, fill: 1),
-            ),
-            label: Text('Home', style: Theme.of(context).textTheme.labelLarge),
-          ),
-          NavigationRailDestination(
-            icon: IconTheme(
-              data: IconThemeData(color: colorScheme.onSurfaceVariant),
               child: const Tooltip(
                 message: 'History',
                 child: Icon(Symbols.history),
@@ -119,13 +109,30 @@ class AppSidebar extends StatelessWidget {
             icon: IconTheme(
               data: IconThemeData(color: colorScheme.onSurfaceVariant),
               child: const Tooltip(
+                message: 'Customization',
+                child: Icon(Symbols.palette),
+              ),
+            ),
+            selectedIcon: const Tooltip(
+              message: 'Customization',
+              child: Icon(Symbols.palette, fill: 1),
+            ),
+            label: Text(
+              'Customization',
+              style: Theme.of(context).textTheme.labelLarge,
+            ),
+          ),
+          NavigationRailDestination(
+            icon: IconTheme(
+              data: IconThemeData(color: colorScheme.onSurfaceVariant),
+              child: const Tooltip(
                 message: 'Settings',
-                child: Icon(Symbols.tune),
+                child: Icon(Symbols.settings),
               ),
             ),
             selectedIcon: const Tooltip(
               message: 'Settings',
-              child: Icon(Symbols.tune, fill: 1),
+              child: Icon(Symbols.settings, fill: 1),
             ),
             label: Text(
               'Settings',
@@ -155,7 +162,7 @@ class MainScaffold extends StatefulWidget {
 }
 
 class _MainScaffoldState extends State<MainScaffold> {
-  RailDestination _selectedDestination = RailDestination.home;
+  RailDestination _selectedDestination = RailDestination.history;
 
   @override
   Widget build(BuildContext context) {
@@ -181,9 +188,9 @@ class _MainScaffoldState extends State<MainScaffold> {
                       AppBar(
                         title: Text(
                           switch (_selectedDestination) {
-                            RailDestination.home => 'Home',
                             RailDestination.history => 'History',
-                            RailDestination.customization => 'Settings',
+                            RailDestination.customization => 'Customization',
+                            RailDestination.settings => 'Settings',
                           },
                           style: Theme.of(context).textTheme.headlineMedium,
                         ),
@@ -196,13 +203,13 @@ class _MainScaffoldState extends State<MainScaffold> {
                       ),
                       Expanded(
                         child: switch (_selectedDestination) {
-                          RailDestination.home => HomeScreen(
-                              recordingService: widget.recordingService,
-                            ),
                           RailDestination.history => HistoryScreen(
                               historyService: widget.historyService,
                             ),
                           RailDestination.customization => CustomizationScreen(
+                              historyService: widget.historyService,
+                            ),
+                          RailDestination.settings => SettingsScreen(
                               recordingService: widget.recordingService,
                               onHotKeyChanged: () {},
                             ),

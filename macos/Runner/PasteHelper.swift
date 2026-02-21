@@ -19,7 +19,9 @@ class PasteHelper {
         pasteboard.clearContents()
         pasteboard.setString(text, forType: .string)
 
-        try? await Task.sleep(nanoseconds: 50_000_000)
+        // Delay so clipboard is fully available before simulating paste.
+        // Longer delay helps when pasting into the same app (Open Yapper).
+        try? await Task.sleep(nanoseconds: 150_000_000)
 
         let source = CGEventSource(stateID: .hidSystemState)
         let keyDown = CGEvent(keyboardEventSource: source, virtualKey: CGKeyCode(kVK_ANSI_V), keyDown: true)
@@ -31,7 +33,8 @@ class PasteHelper {
         keyUp?.post(tap: .cgAnnotatedSessionEventTap)
 
         if restoreClipboard {
-            try? await Task.sleep(nanoseconds: 500_000_000)
+            // Wait for paste to complete before restoring clipboard.
+            try? await Task.sleep(nanoseconds: 700_000_000)
             pasteboard.clearContents()
             pasteboard.writeObjects(savedItems)
         }

@@ -8,29 +8,24 @@ import 'package:record/record.dart';
 
 import 'gemini_service.dart';
 import 'native_bridge.dart';
+import 'prompt_builder.dart';
 import 'recording_history_service.dart';
-
-const _defaultSystemPrompt =
-    'You are a helpful assistant. The user is dictating via voice. '
-    'Respond with only the text to paste. No preamble, no markdown.';
+import 'settings_storage.dart';
 
 /// Service that manages voice recording, Gemini processing, and paste.
 class RecordingService extends ChangeNotifier {
   RecordingService({
     RecordingHistoryService? historyService,
     Future<String?> Function()? loadApiKey,
-    Future<String> Function()? loadSystemPrompt,
     Future<String> Function()? loadModel,
   })  : _historyService = historyService,
         _loadApiKey = loadApiKey ?? (() async => null),
-        _loadSystemPrompt = loadSystemPrompt ?? (() async => _defaultSystemPrompt),
-        _loadModel = loadModel ?? (() async => 'gemini-2.0-flash') {
+        _loadModel = loadModel ?? (() async => 'gemini-flash-lite-latest') {
     _init();
   }
 
   final RecordingHistoryService? _historyService;
   final Future<String?> Function() _loadApiKey;
-  final Future<String> Function() _loadSystemPrompt;
   final Future<String> Function() _loadModel;
 
   final AudioRecorder _recorder = AudioRecorder();
@@ -42,6 +37,7 @@ class RecordingService extends ChangeNotifier {
   bool _accessibilityGranted = false;
   bool _isRecording = false;
   bool _isProcessing = false;
+  bool _cancelRequested = false;
   bool _isPasteSuccess = false;
   bool _isPlaying = false;
   String? _recordedFilePath;
@@ -96,7 +92,8 @@ class RecordingService extends ChangeNotifier {
   }
 
   Future<void> checkPermissions() async {
-    _hasPermission = await _native.checkMicrophonePermission();
+    // Use recorder package status for passive checks to avoid re-triggering prompts.
+    _hasPermission = await _recorder.hasPermission();
     _accessibilityGranted = await _native.checkAccessibility();
     notifyListeners();
   }
@@ -197,12 +194,20 @@ class RecordingService extends ChangeNotifier {
     final duration = _recordingDuration;
     _isRecording = false;
     _isProcessing = true;
+    _cancelRequested = false;
     notifyListeners();
 
     await _native.updateOverlayState('processing');
 
     final targetApp = await _native.getFrontmostAppName();
-    final systemPrompt = await _loadSystemPrompt();
+    final appKey = targetApp ?? 'Default';
+    final tone = await loadAppTone(appKey);
+    final customPrompt = await loadAppPrompt(appKey);
+    final systemPrompt = PromptBuilder.build(
+      tone: tone,
+      targetApp: targetApp,
+      customPrompt: customPrompt,
+    );
     final model = await _loadModel();
     final apiKey = await _loadApiKey();
 
@@ -221,6 +226,15 @@ class RecordingService extends ChangeNotifier {
         systemPrompt: systemPrompt,
       );
 
+      if (_cancelRequested) {
+        _isProcessing = false;
+        try {
+          await File(path).delete();
+        } catch (_) {}
+        notifyListeners();
+        return;
+      }
+
       await _native.pasteText(response, restoreClipboard: true);
 
       _isProcessing = false;
@@ -228,12 +242,12 @@ class RecordingService extends ChangeNotifier {
       notifyListeners();
 
       if (_historyService != null) {
-        final entry = await _historyService!.addRecording(
+        final entry = await _historyService.addRecording(
           path,
           durationSeconds: duration,
         );
         if (entry != null) {
-          await _historyService!.updateEntryResponse(
+          await _historyService.updateEntryResponse(
             id: entry.id,
             response: response,
             targetApp: targetApp,
@@ -259,12 +273,39 @@ class RecordingService extends ChangeNotifier {
         await File(path).delete();
       } catch (_) {}
     } catch (e) {
-      _isProcessing = false;
-      _lastError = e.toString();
-      await _native.dismissRecordingOverlay();
+      if (!_cancelRequested) {
+        _isProcessing = false;
+        _lastError = e.toString();
+        await _native.dismissRecordingOverlay();
+      }
       try {
         await File(path).delete();
       } catch (_) {}
+      notifyListeners();
+    }
+  }
+
+  /// Cancels recording or processing when the user taps the escape button.
+  Future<void> cancelRecordingOrProcessing() async {
+    if (_isRecording) {
+      _durationTimer?.cancel();
+      _amplitudeSub?.cancel();
+      final path = await _recorder.stop();
+      _isRecording = false;
+      _isProcessing = false;
+      await _native.dismissRecordingOverlay();
+      if (path != null) {
+        try {
+          await File(path).delete();
+        } catch (_) {}
+      }
+      notifyListeners();
+      return;
+    }
+    if (_isProcessing) {
+      _cancelRequested = true;
+      await _native.dismissRecordingOverlay();
+      _isProcessing = false;
       notifyListeners();
     }
   }

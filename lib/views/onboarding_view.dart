@@ -69,32 +69,43 @@ class _OnboardingViewState extends State<OnboardingView> {
   }
 
   Future<void> _openMicrophoneSettings() async {
-    const url =
-        'x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone';
-    // Try native first (uses shell `open` command), then url_launcher fallback
+    const urls = [
+      'x-apple.systemsettings:com.apple.preference.security?Privacy_Microphone',
+      'x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone',
+      'x-apple.systemsettings:',
+    ];
+    // Try native first, then URL fallbacks for different macOS versions.
     try {
       await NativeBridge.instance.openMicrophoneSettings();
     } catch (_) {
-      await _openSettingsUrl(url);
+      for (final url in urls) {
+        if (await _openSettingsUrl(url)) break;
+      }
     }
   }
 
   Future<void> _openAccessibilitySettings() async {
-    const url =
-        'x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility';
+    const urls = [
+      'x-apple.systemsettings:com.apple.preference.security?Privacy_Accessibility',
+      'x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility',
+      'x-apple.systemsettings:',
+    ];
     try {
       await NativeBridge.instance.openAccessibilitySettings();
     } catch (_) {
-      await _openSettingsUrl(url);
+      for (final url in urls) {
+        if (await _openSettingsUrl(url)) break;
+      }
     }
   }
 
-  Future<void> _openSettingsUrl(String urlString) async {
-    if (!Platform.isMacOS) return;
+  Future<bool> _openSettingsUrl(String urlString) async {
+    if (!Platform.isMacOS) return false;
     final uri = Uri.parse(urlString);
     try {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
+      return await launchUrl(uri, mode: LaunchMode.externalApplication);
     } catch (_) {}
+    return false;
   }
 
   Future<void> _restartApp() async {

@@ -1,9 +1,12 @@
 import Cocoa
 import SwiftUI
+import Carbon.HIToolbox
 
 class OverlayWindowController {
     private var panel: NSPanel?
     private var pillState = PillState()
+    private var escapeMonitor: Any?
+    var onCancel: (() -> Void)?
 
     class PillState: ObservableObject {
         @Published var state: String = "recording"  // "recording", "processing", "success"
@@ -14,9 +17,9 @@ class OverlayWindowController {
     func show(state: String) {
         guard let screen = NSScreen.main else { return }
 
-        let pillWidth: CGFloat = 280
-        let pillHeight: CGFloat = 64
-        let bottomPadding: CGFloat = 48
+        let pillWidth: CGFloat = 180
+        let pillHeight: CGFloat = 44
+        let bottomPadding: CGFloat = 88
 
         let xOrigin = (screen.frame.width - pillWidth) / 2 + screen.frame.origin.x
         let yOrigin = screen.frame.origin.y + bottomPadding
@@ -26,6 +29,9 @@ class OverlayWindowController {
         pillState.duration = 0
 
         let pillView = NativeRecordingPillView(pillState: pillState)
+        #if DEBUG
+        print("[Overlay] Showing compact dark pill (180×44, black 0.75)")
+        #endif
         let hostingView = NSHostingView(rootView: pillView)
 
         let panel = NSPanel(
@@ -37,11 +43,12 @@ class OverlayWindowController {
 
         panel.isOpaque = false
         panel.backgroundColor = .clear
-        panel.hasShadow = true
+        panel.hasShadow = false
+        panel.appearance = NSApp.effectiveAppearance
         panel.level = .screenSaver
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
         panel.isMovableByWindowBackground = false
-        panel.ignoresMouseEvents = true
+        panel.ignoresMouseEvents = false
         panel.hidesOnDeactivate = false
         panel.contentView = hostingView
 
@@ -61,6 +68,18 @@ class OverlayWindowController {
         }
 
         self.panel = panel
+
+        // Listen for Escape key to cancel
+        escapeMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            guard let self, event.keyCode == UInt16(kVK_Escape), self.panel != nil else {
+                return event
+            }
+            if pillState.state != "success" {
+                onCancel?()
+                return nil  // Consume the event
+            }
+            return event
+        }
     }
 
     func updateState(_ state: String) {
@@ -83,6 +102,10 @@ class OverlayWindowController {
 
     func dismiss() {
         guard let panel else { return }
+        if let monitor = escapeMonitor {
+            NSEvent.removeMonitor(monitor)
+            escapeMonitor = nil
+        }
         NSAnimationContext.runAnimationGroup({ context in
             context.duration = 0.3
             context.timingFunction = CAMediaTimingFunction(name: .easeIn)
