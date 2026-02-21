@@ -45,5 +45,9 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Open Yapper needs mic access to record your voice. Ramble naturally—we'll clean it up and turn it into polished text.</string>
+	<key>NSHumanReadableCopyright</key>
+	<string>Open Yapper - The GEN Z voice dictation app. Stop typing, start talking.</string>
 </dict>
 </plist>

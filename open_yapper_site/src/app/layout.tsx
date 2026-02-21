@@ -26,11 +26,19 @@ export const metadata: Metadata = {
   },
   title: "Open Yapper - Stop Typing, Start Talking",
   description:
-    "Voice dictation that removes filler words and refines your text. Ramble naturally, AI cleans the mess, paste anywhere.",
+    "The GEN Z voice dictation app. Open-source WhisperFlow alternative—ramble naturally, AI cleans the mess, no cap. Removes filler words, refines your text, paste anywhere.",
+  keywords: [
+    "voice dictation",
+    "speech to text",
+    "WhisperFlow alternative",
+    "GEN Z app",
+    "AI transcription",
+    "open source",
+  ],
   openGraph: {
     title: "Open Yapper - Stop Typing, Start Talking",
     description:
-      "Voice dictation that removes filler words and refines your text. Ramble naturally, AI cleans the mess, paste anywhere.",
+      "The GEN Z voice dictation app. Open-source WhisperFlow alternative—ramble naturally, AI cleans the mess. Stop typing, start talking.",
     images: ["/og-image.png"],
     type: "website",
   },
@@ -38,7 +46,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Open Yapper - Stop Typing, Start Talking",
     description:
-      "Voice dictation that removes filler words and refines your text. Ramble naturally, AI cleans the mess, paste anywhere.",
+      "The GEN Z voice dictation app. Open-source WhisperFlow alternative—ramble naturally, AI cleans the mess. Stop typing, start talking.",
     images: ["/og-image.png"],
   },
   robots: {
