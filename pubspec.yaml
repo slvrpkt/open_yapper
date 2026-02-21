@@ -9,6 +9,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  google_fonts: ^6.2.1
   material_symbols_icons: ^4.2906.0
   shared_preferences: ^2.2.2
   record: ^6.0.0
@@ -33,14 +34,10 @@ flutter_launcher_icons:
     generate: true
   web:
     generate: true
-    background_color: "#F4BA83"
-    theme_color: "#F4BA83"
+    background_color: "#F4F4F0"
+    theme_color: "#D4FF00"
   windows:
     generate: true
 
 flutter:
   uses-material-design: true
-  fonts:
-    - family: Haskoy
-      fonts:
-        - asset: assets/font/Haskoy-variable.ttf

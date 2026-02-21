@@ -85,6 +85,7 @@ class RecordingService extends ChangeNotifier {
         _isPlaying = false;
         notifyListeners();
       });
+      await _native.setStopHotkeyEnabled(false);
     } catch (e) {
       _initError = e.toString();
     }
@@ -147,6 +148,7 @@ class RecordingService extends ChangeNotifier {
       _recordedFilePath = null;
       _recordingDuration = 0;
       _currentAudioLevel = 0;
+      await _native.setStopHotkeyEnabled(true);
 
       _amplitudeSub = _recorder
           .onAmplitudeChanged(const Duration(milliseconds: 50))
@@ -180,6 +182,7 @@ class RecordingService extends ChangeNotifier {
     if (_recordingDuration < 0.5) {
       final path = await _recorder.stop();
       _isRecording = false;
+      await _native.setStopHotkeyEnabled(false);
       await _native.dismissRecordingOverlay();
       if (path != null) {
         try {
@@ -193,6 +196,7 @@ class RecordingService extends ChangeNotifier {
     final path = await _recorder.stop();
     final duration = _recordingDuration;
     _isRecording = false;
+    await _native.setStopHotkeyEnabled(false);
     _isProcessing = true;
     _cancelRequested = false;
     notifyListeners();
@@ -203,10 +207,12 @@ class RecordingService extends ChangeNotifier {
     final appKey = targetApp ?? 'Default';
     final tone = await loadAppTone(appKey);
     final customPrompt = await loadAppPrompt(appKey);
+    final genZ = await loadGenZEnabled();
     final systemPrompt = PromptBuilder.build(
       tone: tone,
       targetApp: targetApp,
       customPrompt: customPrompt,
+      genZ: genZ,
     );
     final model = await _loadModel();
     final apiKey = await _loadApiKey();
@@ -242,23 +248,14 @@ class RecordingService extends ChangeNotifier {
       notifyListeners();
 
       if (_historyService != null) {
-        final entry = await _historyService.addRecording(
-          path,
+        final entry = await _historyService.addTextEntry(
+          response: response,
+          targetApp: targetApp,
+          model: model,
           durationSeconds: duration,
         );
         if (entry != null) {
-          await _historyService.updateEntryResponse(
-            id: entry.id,
-            response: response,
-            targetApp: targetApp,
-            model: model,
-          );
-          _latestEntry = entry.copyWith(
-            response: response,
-            targetApp: targetApp,
-            model: model,
-            durationSeconds: duration,
-          );
+          _latestEntry = entry;
         }
       }
 
@@ -292,6 +289,7 @@ class RecordingService extends ChangeNotifier {
       _amplitudeSub?.cancel();
       final path = await _recorder.stop();
       _isRecording = false;
+      await _native.setStopHotkeyEnabled(false);
       _isProcessing = false;
       await _native.dismissRecordingOverlay();
       if (path != null) {

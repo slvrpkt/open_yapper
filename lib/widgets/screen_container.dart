@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 /// A container for menu screen content with:
 /// - 20px padding from top, right, left, and bottom
 /// - surface color for the content area (inner pages)
-/// - surfaceContainer for the outer area around the content
+/// - surfaceContainerHighest for the outer area around the content
 /// - Rounded corners applied to the content surface
 class ScreenContainer extends StatelessWidget {
   const ScreenContainer({
@@ -20,7 +20,7 @@ class ScreenContainer extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return ColoredBox(
-      color: colorScheme.surfaceContainer,
+      color: colorScheme.surfaceContainerHighest,
       child: Padding(
         padding: const EdgeInsets.only(top: 12, right: 12, bottom: 12),
         child: ClipRRect(

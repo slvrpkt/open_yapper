@@ -102,7 +102,8 @@ class RecordingHistoryService extends ChangeNotifier {
         final list = jsonDecode(content) as List<dynamic>;
         _entries = list
             .map((e) => RecordingEntry.fromJson(e as Map<String, dynamic>))
-            .where((e) => File(e.filePath).existsSync())
+            .where((e) =>
+                e.filePath.isEmpty || File(e.filePath).existsSync())
             .toList()
           ..sort((a, b) => b.recordedAt.compareTo(a.recordedAt));
       } else {
@@ -129,31 +130,23 @@ class RecordingHistoryService extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Adds a recording to history by copying the source file.
-  Future<RecordingEntry?> addRecording(
-    String sourcePath, {
+  /// Adds a text-only entry to history (no voice recording file is saved).
+  Future<RecordingEntry?> addTextEntry({
+    required String response,
+    String? targetApp,
+    required String model,
     double? durationSeconds,
   }) async {
-    final source = File(sourcePath);
-    if (!await source.exists()) return null;
-
     try {
-      final dir = await getApplicationDocumentsDirectory();
-      final historyDir = Directory('${dir.path}/open_yapper_recordings');
-      if (!await historyDir.exists()) {
-        await historyDir.create(recursive: true);
-      }
-
       final id = DateTime.now().millisecondsSinceEpoch.toString();
-      final ext = sourcePath.split('.').last;
-      final destPath = '${historyDir.path}/recording_$id.$ext';
-      await source.copy(destPath);
-
       final entry = RecordingEntry(
         id: id,
-        filePath: destPath,
+        filePath: '',
         recordedAt: DateTime.now(),
         durationSeconds: durationSeconds,
+        response: response,
+        targetApp: targetApp,
+        model: model,
       );
 
       await _ensureLoaded();
@@ -198,10 +191,11 @@ class RecordingHistoryService extends ChangeNotifier {
     await _save();
   }
 
-  /// Clears all history and deletes all recording files.
+  /// Clears all history and deletes any recording files (text-only entries have no file).
   Future<void> clearHistory() async {
     await _ensureLoaded();
     for (final entry in _entries) {
+      if (entry.filePath.isEmpty) continue;
       try {
         final file = File(entry.filePath);
         if (await file.exists()) await file.delete();
@@ -211,17 +205,19 @@ class RecordingHistoryService extends ChangeNotifier {
     await _save();
   }
 
-  /// Removes a recording from history and deletes its file.
+  /// Removes an entry from history and deletes its file if one exists.
   Future<void> removeRecording(String id) async {
     await _ensureLoaded();
     final index = _entries.indexWhere((e) => e.id == id);
     if (index < 0) return;
     final entry = _entries[index];
     _entries.removeAt(index);
-    try {
-      final file = File(entry.filePath);
-      if (await file.exists()) await file.delete();
-    } catch (_) {}
+    if (entry.filePath.isNotEmpty) {
+      try {
+        final file = File(entry.filePath);
+        if (await file.exists()) await file.delete();
+      } catch (_) {}
+    }
     await _save();
   }
 }

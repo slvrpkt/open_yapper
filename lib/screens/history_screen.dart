@@ -1,11 +1,21 @@
-import 'dart:io';
-
-import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../services/recording_history_service.dart';
+
+/// Groups entries by day and hour for sectioned display.
+class _HistorySection {
+  const _HistorySection({
+    required this.dayLabel,
+    required this.hourLabel,
+    required this.entries,
+  });
+
+  final String dayLabel;
+  final String hourLabel;
+  final List<RecordingEntry> entries;
+}
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({
@@ -20,35 +30,18 @@ class HistoryScreen extends StatefulWidget {
 }
 
 class _HistoryScreenState extends State<HistoryScreen> {
-  final AudioPlayer _player = AudioPlayer();
-  String? _playingId;
-
   @override
   void initState() {
     super.initState();
     widget.historyService.loadEntries();
-    _player.onPlayerComplete.listen((_) {
-      if (mounted) setState(() => _playingId = null);
-    });
   }
 
-  @override
-  void dispose() {
-    _player.dispose();
-    super.dispose();
-  }
-
-  Future<void> _togglePlayback(RecordingEntry entry) async {
-    if (!File(entry.filePath).existsSync()) return;
-
-    if (_playingId == entry.id) {
-      await _player.stop();
-      if (mounted) setState(() => _playingId = null);
-    } else {
-      await _player.stop();
-      await _player.play(DeviceFileSource(entry.filePath));
-      if (mounted) setState(() => _playingId = entry.id);
-    }
+  void _copyText(String text) {
+    if (text.isEmpty) return;
+    Clipboard.setData(ClipboardData(text: text));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Copied to clipboard')),
+    );
   }
 
   Future<void> _deleteRecording(RecordingEntry entry) async {
@@ -85,26 +78,25 @@ class _HistoryScreenState extends State<HistoryScreen> {
       ),
     );
     if (confirmed == true && mounted) {
-      if (_playingId == entry.id) {
-        await _player.stop();
-        _playingId = null;
-      }
       await widget.historyService.removeRecording(entry.id);
     }
   }
 
-  String _formatDate(DateTime dt) {
+  String _formatDayLabel(DateTime dt) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final recordDay = DateTime(dt.year, dt.month, dt.day);
-    if (recordDay == today) {
-      return 'Today, ${_formatTime(dt)}';
-    }
+    if (recordDay == today) return 'Today';
     final yesterday = today.subtract(const Duration(days: 1));
-    if (recordDay == yesterday) {
-      return 'Yesterday, ${_formatTime(dt)}';
-    }
-    return '${dt.month}/${dt.day}/${dt.year} ${_formatTime(dt)}';
+    if (recordDay == yesterday) return 'Yesterday';
+    return '${dt.month}/${dt.day}/${dt.year}';
+  }
+
+  String _formatHourBucket(DateTime dt) {
+    final h = dt.hour;
+    final am = h < 12;
+    final hour = am ? (h == 0 ? 12 : h) : (h == 12 ? 12 : h - 12);
+    return '$hour ${am ? 'AM' : 'PM'}';
   }
 
   String _formatTime(DateTime dt) {
@@ -113,6 +105,45 @@ class _HistoryScreenState extends State<HistoryScreen> {
     final am = h < 12;
     final hour = am ? (h == 0 ? 12 : h) : (h == 12 ? 12 : h - 12);
     return '$hour:${m.toString().padLeft(2, '0')} ${am ? 'AM' : 'PM'}';
+  }
+
+  List<_HistorySection> _buildSections(List<RecordingEntry> entries) {
+    final sections = <_HistorySection>[];
+    DateTime? lastDay;
+    int? lastHour;
+    List<RecordingEntry>? currentEntries;
+
+    for (final entry in entries) {
+      final recordDay = DateTime(
+        entry.recordedAt.year,
+        entry.recordedAt.month,
+        entry.recordedAt.day,
+      );
+      final hour = entry.recordedAt.hour;
+
+      if (lastDay != recordDay || lastHour != hour) {
+        if (currentEntries != null && currentEntries.isNotEmpty) {
+          sections.add(_HistorySection(
+            dayLabel: _formatDayLabel(lastDay!),
+            hourLabel: _formatHourBucket(DateTime(0, 1, 1, lastHour!)),
+            entries: currentEntries,
+          ));
+        }
+        lastDay = recordDay;
+        lastHour = hour;
+        currentEntries = [entry];
+      } else {
+        currentEntries!.add(entry);
+      }
+    }
+    if (currentEntries != null && currentEntries.isNotEmpty && lastDay != null && lastHour != null) {
+      sections.add(_HistorySection(
+        dayLabel: _formatDayLabel(lastDay),
+        hourLabel: _formatHourBucket(DateTime(0, 1, 1, lastHour)),
+        entries: currentEntries,
+      ));
+    }
+    return sections;
   }
 
   @override
@@ -156,15 +187,23 @@ class _HistoryScreenState extends State<HistoryScreen> {
           );
         }
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton.icon(
+        final sections = _buildSections(entries);
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'History',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    TextButton.icon(
                     onPressed: () async {
                       final confirmed = await showDialog<bool>(
                         context: context,
@@ -201,174 +240,143 @@ class _HistoryScreenState extends State<HistoryScreen> {
             ),
             Expanded(
               child: ListView.builder(
-          padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-          itemCount: entries.length,
-          itemBuilder: (context, index) {
-            final entry = entries[index];
-            final exists = File(entry.filePath).existsSync();
-            final isPlaying = _playingId == entry.id;
-
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Material(
-                color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(16),
-                child: InkWell(
-                  onTap: exists ? () => _togglePlayback(entry) : null,
-                  borderRadius: BorderRadius.circular(16),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.primaryContainer,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Icon(
-                            isPlaying ? Symbols.stop : Symbols.audio_file,
-                            color: Theme.of(context).colorScheme.onPrimaryContainer,
-                            size: 24,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              SelectableText(
-                                entry.displayText.isNotEmpty
-                                    ? entry.displayText
-                                    : 'Audio input',
-                                style: Theme.of(context).textTheme.bodyMedium,
-                                maxLines: 2,
-                              ),
-                              if (entry.transcription != null &&
-                                  entry.transcription != entry.response &&
-                                  entry.transcription!.isNotEmpty)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 4),
-                                  child: Text(
-                                    entry.transcription!,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodySmall
-                                        ?.copyWith(
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .onSurfaceVariant
-                                              .withValues(alpha: 0.6),
-                                        ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
+                padding: const EdgeInsets.only(bottom: 24),
+                itemCount: sections.length,
+                itemBuilder: (context, index) {
+                  final section = sections[index];
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: RichText(
+                          text: TextSpan(
+                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
                                 ),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  Text(
-                                    _formatDate(entry.recordedAt),
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodySmall
-                                        ?.copyWith(
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .onSurfaceVariant,
-                                        ),
-                                  ),
-                                  if (entry.targetApp != null) ...[
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      '→ ${entry.targetApp}',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodySmall
-                                          ?.copyWith(
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .onSurfaceVariant
-                                                .withValues(alpha: 0.6),
-                                          ),
-                                    ),
-                                  ],
-                                  if (entry.durationSeconds != null) ...[
-                                    const SizedBox(width: 8),
-                                    _Chip(
-                                        '${entry.durationSeconds!.toStringAsFixed(1)}s'),
-                                  ],
-                                  if (entry.model != null) ...[
-                                    const SizedBox(width: 4),
-                                    _Chip(entry.model!),
-                                  ],
-                                ],
+                            children: [
+                              TextSpan(
+                                text: section.dayLabel.toLowerCase(),
+                                style: const TextStyle(fontSize: 14),
+                              ),
+                              TextSpan(
+                                text: ' · ',
+                                style: const TextStyle(fontSize: 14),
+                              ),
+                              TextSpan(
+                                text: section.hourLabel,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Theme.of(context).colorScheme.onSurface,
+                                ),
                               ),
                             ],
                           ),
                         ),
-                        if (entry.displayText.isNotEmpty)
-                          IconButton(
-                            onPressed: () {
-                              Clipboard.setData(ClipboardData(
-                                text: entry.displayText,
-                              ));
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content: Text('Copied to clipboard')),
-                              );
-                            },
-                            icon: Icon(Symbols.content_copy, size: 22),
-                            tooltip: 'Copy',
-                          ),
-                        if (exists)
-                          IconButton(
-                            onPressed: () => _togglePlayback(entry),
-                            icon: Icon(
-                              isPlaying ? Symbols.stop : Symbols.play_arrow,
-                              size: 24,
-                            ),
-                            tooltip: isPlaying ? 'Stop' : 'Play',
-                          ),
-                        IconButton(
-                          onPressed: () => _deleteRecording(entry),
-                          icon: const Icon(Symbols.delete_outline, size: 22),
-                          tooltip: 'Delete',
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+                      ),
+                      ...section.entries.map((entry) => _HistoryCard(
+                            entry: entry,
+                            formatTime: _formatTime,
+                            onCopy: _copyText,
+                            onDelete: _deleteRecording,
+                          )),
+                      const SizedBox(height: 20),
+                    ],
+                  );
+                },
               ),
-            );
-          },
-        ),
             ),
           ],
+        ),
         );
       },
     );
   }
 }
 
-class _Chip extends StatelessWidget {
-  const _Chip(this.label);
+class _HistoryCard extends StatelessWidget {
+  const _HistoryCard({
+    required this.entry,
+    required this.formatTime,
+    required this.onCopy,
+    required this.onDelete,
+  });
 
-  final String label;
+  final RecordingEntry entry;
+  final String Function(DateTime) formatTime;
+  final void Function(String) onCopy;
+  final void Function(RecordingEntry) onDelete;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelSmall,
+    final text = entry.displayText.isNotEmpty
+        ? entry.displayText
+        : (entry.transcription ?? 'No text');
+    final canCopy = text.isNotEmpty;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Material(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: canCopy ? () => onCopy(text) : null,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        text,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (canCopy)
+                          IconButton(
+                            onPressed: () => onCopy(text),
+                            icon: const Icon(Symbols.content_copy, size: 22),
+                            tooltip: 'Copy',
+                          ),
+                        IconButton(
+                          onPressed: () => onDelete(entry),
+                          icon: const Icon(Symbols.delete_outline, size: 22),
+                          tooltip: 'Delete',
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surfaceContainer,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    formatTime(entry.recordedAt),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurfaceVariant,
+                        ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../services/native_bridge.dart';
 import '../services/recording_service.dart';
 import '../services/settings_storage.dart';
+import '../widgets/pasteable_text_field.dart';
 
 class OnboardingView extends StatefulWidget {
   const OnboardingView({
@@ -23,6 +24,10 @@ class OnboardingView extends StatefulWidget {
 
 class _OnboardingViewState extends State<OnboardingView> {
   Timer? _pollTimer;
+  bool _apiKeySet = false;
+  final TextEditingController _apiKeyController = TextEditingController();
+  bool _apiKeyObscured = true;
+  bool _savingApiKey = false;
 
   @override
   void initState() {
@@ -31,10 +36,25 @@ class _OnboardingViewState extends State<OnboardingView> {
     _startPolling();
   }
 
+  @override
+  void dispose() {
+    _apiKeyController.dispose();
+    _pollTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<bool> _checkApiKey() async {
+    final key = await loadGeminiApiKey();
+    final isSet = key != null && key.trim().isNotEmpty;
+    if (mounted) setState(() => _apiKeySet = isSet);
+    return isSet;
+  }
+
   Future<void> _initOnboarding() async {
     // Re-check permissions immediately when welcome screen would show
     await widget.recordingService.checkPermissions();
-    if (widget.recordingService.allPermissionsGranted) {
+    final apiKeySet = await _checkApiKey();
+    if (widget.recordingService.allPermissionsGranted && apiKeySet) {
       await setOnboardingCompleted(true);
       if (mounted) setState(() {});
       return;
@@ -49,24 +69,23 @@ class _OnboardingViewState extends State<OnboardingView> {
     if (mounted) setState(() {});
   }
 
+  bool _shouldHideOnboarding() =>
+      widget.recordingService.allPermissionsGranted && _apiKeySet;
+
   void _startPolling() {
     _pollTimer?.cancel();
     _pollTimer = Timer.periodic(const Duration(seconds: 2), (_) async {
       if (!widget.recordingService.allPermissionsGranted) {
         await widget.recordingService.checkPermissions();
-        if (widget.recordingService.allPermissionsGranted) {
-          await setOnboardingCompleted(true);
-        }
-        if (mounted) setState(() {});
       }
+      await _checkApiKey();
+      if (_shouldHideOnboarding()) {
+        await setOnboardingCompleted(true);
+      }
+      if (mounted) setState(() {});
     });
   }
 
-  @override
-  void dispose() {
-    _pollTimer?.cancel();
-    super.dispose();
-  }
 
   Future<void> _openMicrophoneSettings() async {
     const urls = [
@@ -108,6 +127,40 @@ class _OnboardingViewState extends State<OnboardingView> {
     return false;
   }
 
+  Future<void> _openGeminiApiKeyUrl() async {
+    try {
+      await launchUrl(
+        Uri.parse('https://aistudio.google.com/apikey'),
+        mode: LaunchMode.externalApplication,
+      );
+    } catch (_) {}
+  }
+
+  Future<void> _saveApiKeyAndComplete() async {
+    final key = _apiKeyController.text.trim();
+    if (key.isEmpty) {
+      return;
+    }
+    setState(() => _savingApiKey = true);
+    try {
+      await saveGeminiApiKey(key);
+      await setOnboardingCompleted(true);
+      if (mounted) {
+        setState(() {
+          _apiKeySet = true;
+          _savingApiKey = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _savingApiKey = false);
+    }
+  }
+
+  void _skipApiKey() async {
+    await setOnboardingCompleted(true);
+    if (mounted) setState(() => _apiKeySet = true);
+  }
+
   Future<void> _restartApp() async {
     try {
       await NativeBridge.instance.restartApp();
@@ -119,10 +172,26 @@ class _OnboardingViewState extends State<OnboardingView> {
     return ListenableBuilder(
       listenable: widget.recordingService,
       builder: (context, _) {
-        if (widget.recordingService.allPermissionsGranted) {
+        if (_shouldHideOnboarding()) {
           return const SizedBox.shrink();
         }
 
+        // Step 2: API key (after permissions are granted)
+        if (widget.recordingService.allPermissionsGranted) {
+          return _ApiKeyOnboardingContent(
+            controller: _apiKeyController,
+            obscured: _apiKeyObscured,
+            saving: _savingApiKey,
+            onObscuredChanged: () =>
+                setState(() => _apiKeyObscured = !_apiKeyObscured),
+            onChanged: () => setState(() {}),
+            onGetKey: _openGeminiApiKeyUrl,
+            onSave: _saveApiKeyAndComplete,
+            onSkip: _skipApiKey,
+          );
+        }
+
+        // Step 1: Permissions
         return Container(
           color: Colors.black54,
           child: Center(
@@ -194,6 +263,153 @@ class _OnboardingViewState extends State<OnboardingView> {
           ),
         );
       },
+    );
+  }
+}
+
+class _ApiKeyOnboardingContent extends StatelessWidget {
+  const _ApiKeyOnboardingContent({
+    required this.controller,
+    required this.obscured,
+    required this.saving,
+    required this.onObscuredChanged,
+    required this.onChanged,
+    required this.onGetKey,
+    required this.onSave,
+    required this.onSkip,
+  });
+
+  final TextEditingController controller;
+  final bool obscured;
+  final bool saving;
+  final VoidCallback onObscuredChanged;
+  final VoidCallback onChanged;
+  final VoidCallback onGetKey;
+  final VoidCallback onSave;
+  final VoidCallback onSkip;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Container(
+      color: Colors.black54,
+      child: Center(
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 500),
+          padding: const EdgeInsets.all(40),
+          decoration: BoxDecoration(
+            color: colorScheme.surface,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black26,
+                blurRadius: 20,
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Icon(Symbols.key, size: 32, color: colorScheme.primary),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Set up Gemini API',
+                    style: theme.textTheme.headlineSmall,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Open Yapper uses Google\'s Gemini AI to transcribe your voice recordings into text. To enable this, you\'ll need a free API key from Google AI Studio.',
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextButton.icon(
+                onPressed: onGetKey,
+                icon: const Icon(Symbols.link, size: 18),
+                label: const Text('Get your API key at aistudio.google.com/apikey'),
+                style: TextButton.styleFrom(
+                  alignment: Alignment.centerLeft,
+                ),
+              ),
+              const SizedBox(height: 24),
+              PasteableTextField(
+                controller: controller,
+                obscureText: obscured,
+                onChanged: (_) => onChanged(),
+                decoration: InputDecoration(
+                  hintText: 'Paste your Gemini API key here',
+                  border: const OutlineInputBorder(),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      obscured ? Symbols.visibility : Symbols.visibility_off,
+                      size: 20,
+                    ),
+                    onPressed: onObscuredChanged,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Symbols.lock,
+                      size: 18,
+                      color: colorScheme.primary,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Your API key is stored securely in your Mac\'s Keychain—the same system that protects your passwords and login credentials. It never leaves your device.',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: saving ? null : onSkip,
+                    child: const Text('Skip for now'),
+                  ),
+                  const SizedBox(width: 12),
+                  FilledButton(
+                    onPressed: saving ||
+                            controller.text.trim().isEmpty
+                        ? null
+                        : onSave,
+                    child: saving
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text('Save & continue'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

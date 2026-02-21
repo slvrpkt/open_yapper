@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 /// Typography tokens following Material Design 3 type scale guidelines.
+/// Matches website: Anton for display/headlines, Space Grotesk for body/titles/labels.
 ///
 /// The M3 type scale is organized into five roles, each with three sizes:
 ///
@@ -47,135 +49,148 @@ import 'package:flutter/material.dart';
 class TypographyTokens {
   TypographyTokens._();
 
-  static const String _fontFamily = 'Haskoy';
-
-  /// Display styles — large, expressive text.
-  static TextStyle get displayLarge => const TextStyle(
-        fontFamily: _fontFamily,
-        fontSize: 57,
-        height: 64 / 57,
-        fontWeight: FontWeight.w400,
-        letterSpacing: -0.25,
+  /// Display/headline: Anton (website font-display)
+  static TextStyle get displayLarge => GoogleFonts.anton(
+        textStyle: const TextStyle(
+          fontSize: 57,
+          height: 64 / 57,
+          fontWeight: FontWeight.w400,
+          letterSpacing: -0.25,
+        ),
       );
 
-  static TextStyle get displayMedium => const TextStyle(
-        fontFamily: _fontFamily,
-        fontSize: 45,
-        height: 52 / 45,
-        fontWeight: FontWeight.w400,
-        letterSpacing: 0,
+  static TextStyle get displayMedium => GoogleFonts.anton(
+        textStyle: const TextStyle(
+          fontSize: 45,
+          height: 52 / 45,
+          fontWeight: FontWeight.w400,
+          letterSpacing: 0,
+        ),
       );
 
-  static TextStyle get displaySmall => const TextStyle(
-        fontFamily: _fontFamily,
-        fontSize: 36,
-        height: 44 / 36,
-        fontWeight: FontWeight.w400,
-        letterSpacing: 0,
+  static TextStyle get displaySmall => GoogleFonts.anton(
+        textStyle: const TextStyle(
+          fontSize: 36,
+          height: 44 / 36,
+          fontWeight: FontWeight.w400,
+          letterSpacing: 0,
+        ),
       );
 
-  /// Headline styles — section headers.
-  static TextStyle get headlineLarge => const TextStyle(
-        fontFamily: _fontFamily,
-        fontSize: 32,
-        height: 40 / 32,
-        fontWeight: FontWeight.w400,
-        letterSpacing: 0,
+  /// Headline styles — section headers (Anton).
+  static TextStyle get headlineLarge => GoogleFonts.anton(
+        textStyle: const TextStyle(
+          fontSize: 32,
+          height: 40 / 32,
+          fontWeight: FontWeight.w400,
+          letterSpacing: 0,
+        ),
       );
 
-  static TextStyle get headlineMedium => const TextStyle(
-        fontFamily: _fontFamily,
-        fontSize: 28,
-        height: 36 / 28,
-        fontWeight: FontWeight.w400,
-        letterSpacing: 0,
+  static TextStyle get headlineMedium => GoogleFonts.anton(
+        textStyle: const TextStyle(
+          fontSize: 28,
+          height: 36 / 28,
+          fontWeight: FontWeight.w400,
+          letterSpacing: 0,
+        ),
       );
 
-  static TextStyle get headlineSmall => const TextStyle(
-        fontFamily: _fontFamily,
-        fontSize: 24,
-        height: 32 / 24,
-        fontWeight: FontWeight.w400,
-        letterSpacing: 0,
+  static TextStyle get headlineSmall => GoogleFonts.anton(
+        textStyle: const TextStyle(
+          fontSize: 24,
+          height: 32 / 24,
+          fontWeight: FontWeight.w400,
+          letterSpacing: 0,
+        ),
       );
 
-  /// Title styles — card titles, list items.
-  static TextStyle get titleLarge => const TextStyle(
-        fontFamily: _fontFamily,
-        fontSize: 22,
-        height: 28 / 22,
-        fontWeight: FontWeight.w400,
-        letterSpacing: 0,
+  /// Title styles — card titles, list items (Space Grotesk).
+  static TextStyle get titleLarge => GoogleFonts.spaceGrotesk(
+        textStyle: const TextStyle(
+          fontSize: 22,
+          height: 28 / 22,
+          fontWeight: FontWeight.w400,
+          letterSpacing: 0,
+        ),
       );
 
-  static TextStyle get titleMedium => const TextStyle(
-        fontFamily: _fontFamily,
-        fontSize: 16,
-        height: 24 / 16,
-        fontWeight: FontWeight.w500,
-        letterSpacing: 0.15,
+  static TextStyle get titleMedium => GoogleFonts.spaceGrotesk(
+        textStyle: const TextStyle(
+          fontSize: 16,
+          height: 24 / 16,
+          fontWeight: FontWeight.w500,
+          letterSpacing: 0.15,
+        ),
       );
 
-  static TextStyle get titleSmall => const TextStyle(
-        fontFamily: _fontFamily,
-        fontSize: 14,
-        height: 20 / 14,
-        fontWeight: FontWeight.w500,
-        letterSpacing: 0.1,
+  static TextStyle get titleSmall => GoogleFonts.spaceGrotesk(
+        textStyle: const TextStyle(
+          fontSize: 14,
+          height: 20 / 14,
+          fontWeight: FontWeight.w500,
+          letterSpacing: 0.1,
+        ),
       );
 
-  /// Body styles — reading content.
-  static TextStyle get bodyLarge => const TextStyle(
-        fontFamily: _fontFamily,
-        fontSize: 16,
-        height: 24 / 16,
-        fontWeight: FontWeight.w400,
-        letterSpacing: 0.5,
+  /// Body styles — reading content (Space Grotesk).
+  static TextStyle get bodyLarge => GoogleFonts.spaceGrotesk(
+        textStyle: const TextStyle(
+          fontSize: 16,
+          height: 24 / 16,
+          fontWeight: FontWeight.w400,
+          letterSpacing: 0.5,
+        ),
       );
 
-  static TextStyle get bodyMedium => const TextStyle(
-        fontFamily: _fontFamily,
-        fontSize: 14,
-        height: 20 / 14,
-        fontWeight: FontWeight.w400,
-        letterSpacing: 0.25,
+  static TextStyle get bodyMedium => GoogleFonts.spaceGrotesk(
+        textStyle: const TextStyle(
+          fontSize: 14,
+          height: 20 / 14,
+          fontWeight: FontWeight.w400,
+          letterSpacing: 0.25,
+        ),
       );
 
-  static TextStyle get bodySmall => const TextStyle(
-        fontFamily: _fontFamily,
-        fontSize: 12,
-        height: 16 / 12,
-        fontWeight: FontWeight.w400,
-        letterSpacing: 0.4,
+  static TextStyle get bodySmall => GoogleFonts.spaceGrotesk(
+        textStyle: const TextStyle(
+          fontSize: 12,
+          height: 16 / 12,
+          fontWeight: FontWeight.w400,
+          letterSpacing: 0.4,
+        ),
       );
 
-  /// Label styles — buttons, chips, captions.
-  static TextStyle get labelLarge => const TextStyle(
-        fontFamily: _fontFamily,
-        fontSize: 14,
-        height: 20 / 14,
-        fontWeight: FontWeight.w500,
-        letterSpacing: 0.1,
+  /// Label styles — buttons, chips, captions (Space Grotesk).
+  static TextStyle get labelLarge => GoogleFonts.spaceGrotesk(
+        textStyle: const TextStyle(
+          fontSize: 14,
+          height: 20 / 14,
+          fontWeight: FontWeight.w500,
+          letterSpacing: 0.1,
+        ),
       );
 
-  static TextStyle get labelMedium => const TextStyle(
-        fontFamily: _fontFamily,
-        fontSize: 12,
-        height: 16 / 12,
-        fontWeight: FontWeight.w500,
-        letterSpacing: 0.5,
+  static TextStyle get labelMedium => GoogleFonts.spaceGrotesk(
+        textStyle: const TextStyle(
+          fontSize: 12,
+          height: 16 / 12,
+          fontWeight: FontWeight.w500,
+          letterSpacing: 0.5,
+        ),
       );
 
-  static TextStyle get labelSmall => const TextStyle(
-        fontFamily: _fontFamily,
-        fontSize: 11,
-        height: 16 / 11,
-        fontWeight: FontWeight.w500,
-        letterSpacing: 0.5,
+  static TextStyle get labelSmall => GoogleFonts.spaceGrotesk(
+        textStyle: const TextStyle(
+          fontSize: 11,
+          height: 16 / 11,
+          fontWeight: FontWeight.w500,
+          letterSpacing: 0.5,
+        ),
       );
 
   /// Returns a complete [TextTheme] with all M3 typography tokens.
-  /// Uses Haskoy variable font for all text styles.
+  /// Display/headline: Anton. Body/title/label: Space Grotesk.
   static TextTheme textTheme({Color? bodyColor, Color? displayColor}) {
     final base = TextTheme(
       displayLarge: displayLarge,

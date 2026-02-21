@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """
-Creates the app icon by replacing the black background of the logo with #F4BA83.
+Creates the app icon by replacing the black background of the logo with #D4FF00 (primary green).
 Output: 1024x1024 PNG suitable for flutter_launcher_icons.
 """
 from pathlib import Path
 
 from PIL import Image
 
-# Background color: #F4BA83 (peachy/tan)
-BG_R, BG_G, BG_B = 0xF4, 0xBA, 0x83
+# Background color: #D4FF00 (primary green / accent lime)
+BG_R, BG_G, BG_B = 0xD4, 0xFF, 0x00
 
 # Black/dark threshold - pixels darker than this become background
 # Brown "OY!" text is ~#50301B (RGB 80,48,27), so threshold must be < 27

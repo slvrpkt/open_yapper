@@ -44,14 +44,6 @@ class NativeChannelHandler: NSObject {
                 self?.channel.invokeMethod("onHotkeyHoldUp", arguments: nil)
             }
         }
-        hotkeyManager.onCaptureNextKey = { [weak self] keyCode, flags in
-            DispatchQueue.main.async {
-                guard let self else { return }
-                self.captureResult?(["keyCode": keyCode, "flags": flags])
-                self.captureResult = nil
-                self.hotkeyManager.onCaptureNextKey = nil
-            }
-        }
     }
 
     private func handleMethodCall(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
@@ -85,6 +77,15 @@ class NativeChannelHandler: NSObject {
 
         case "stopHotkeyListener":
             hotkeyManager.stop()
+            result(true)
+
+        case "setStopHotkeyEnabled":
+            guard let args = call.arguments as? [String: Any],
+                  let enabled = args["enabled"] as? Bool else {
+                result(FlutterError(code: "INVALID_ARGS", message: "Missing enabled", details: nil))
+                return
+            }
+            hotkeyManager.setStopHotkeyEnabled(enabled)
             result(true)
 
         case "captureNextHotkey":

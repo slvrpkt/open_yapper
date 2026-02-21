@@ -6,13 +6,23 @@ class NativeBridge {
   static final NativeBridge instance = NativeBridge._();
   NativeBridge._();
 
-  VoidCallback? _onHotkeyPressed;
+  VoidCallback? _onHotkeyStart;
+  VoidCallback? _onHotkeyStop;
+  VoidCallback? _onHotkeyHoldDown;
+  VoidCallback? _onHotkeyHoldUp;
   VoidCallback? _onCancelRequested;
 
-  /// Set up the callback for when the global hotkey is pressed.
-  /// The native side invokes "onHotkeyPressed" when the user presses the hotkey.
-  void setHotkeyCallback(VoidCallback onPressed) {
-    _onHotkeyPressed = onPressed;
+  /// Set up callbacks for global hotkeys.
+  void setHotkeyCallbacks({
+    required VoidCallback onStart,
+    required VoidCallback onStop,
+    required VoidCallback onHoldDown,
+    required VoidCallback onHoldUp,
+  }) {
+    _onHotkeyStart = onStart;
+    _onHotkeyStop = onStop;
+    _onHotkeyHoldDown = onHoldDown;
+    _onHotkeyHoldUp = onHoldUp;
     _installChannelHandler();
   }
 
@@ -24,13 +34,59 @@ class NativeBridge {
 
   void _installChannelHandler() {
     _channel.setMethodCallHandler((call) async {
-      if (call.method == 'onHotkeyPressed') {
-        _onHotkeyPressed?.call();
-      } else if (call.method == 'onCancelRequested') {
-        _onCancelRequested?.call();
+      switch (call.method) {
+        case 'onHotkeyStart':
+          _onHotkeyStart?.call();
+          break;
+        case 'onHotkeyStop':
+          _onHotkeyStop?.call();
+          break;
+        case 'onHotkeyHoldDown':
+          _onHotkeyHoldDown?.call();
+          break;
+        case 'onHotkeyHoldUp':
+          _onHotkeyHoldUp?.call();
+          break;
+        case 'onCancelRequested':
+          _onCancelRequested?.call();
+          break;
       }
       return null;
     });
+  }
+
+  /// Apply hotkey configuration to the native listener.
+  Future<void> setHotkeyConfig({
+    required int startKeyCode,
+    required int startFlags,
+    required int stopKeyCode,
+    required int stopFlags,
+    required int holdKeyCode,
+    required int holdFlags,
+  }) async {
+    await _channel.invokeMethod('setHotkeyConfig', {
+      'startKeyCode': startKeyCode,
+      'startFlags': startFlags,
+      'stopKeyCode': stopKeyCode,
+      'stopFlags': stopFlags,
+      'holdKeyCode': holdKeyCode,
+      'holdFlags': holdFlags,
+    });
+  }
+
+  /// Capture the next key press and return keyCode and flags.
+  /// Used when remapping hotkeys in settings.
+  Future<Map<String, int>> captureNextHotkey() async {
+    final result = await _channel.invokeMethod<Map<dynamic, dynamic>>(
+      'captureNextHotkey',
+    );
+    if (result == null) {
+      throw Exception('Failed to capture hotkey');
+    }
+    return {
+      'keyCode': result['keyCode'] as int,
+      'flags': result['flags'] as int,
+    };
   }
 
   Future<void> startHotkeyListener() async {
@@ -39,6 +95,12 @@ class NativeBridge {
 
   Future<void> stopHotkeyListener() async {
     await _channel.invokeMethod('stopHotkeyListener');
+  }
+
+  Future<void> setStopHotkeyEnabled(bool enabled) async {
+    await _channel.invokeMethod('setStopHotkeyEnabled', {
+      'enabled': enabled,
+    });
   }
 
   Future<void> pasteText(String text, {bool restoreClipboard = true}) async {

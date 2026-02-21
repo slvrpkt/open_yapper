@@ -184,8 +184,15 @@ class _CustomizationScreenState extends State<CustomizationScreen> {
         allApps.where((a) => !_isCustomized(a.name)).toList();
 
     return ListView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: Text(
+            'Customization',
+            style: theme.textTheme.titleLarge,
+          ),
+        ),
         _Section(
           title: 'Per-app customization',
           icon: Symbols.tune,
@@ -580,8 +587,12 @@ class _Section extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

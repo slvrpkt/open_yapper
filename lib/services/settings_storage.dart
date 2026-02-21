@@ -5,6 +5,7 @@ import 'prompt_builder.dart';
 
 const _geminiApiKeyKey = 'gemini_api_key';
 const _onboardingCompletedKey = 'onboarding_completed';
+const _genZEnabledKey = 'gen_z_enabled';
 const _appTonePrefix = 'app_tone_';
 const _appPromptPrefix = 'app_prompt_';
 const _hotkeyStartKeyCodeKey = 'hotkey_start_keycode';
@@ -166,6 +167,24 @@ Future<void> setOnboardingCompleted(bool value) async {
   try {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_onboardingCompletedKey, value);
+  } catch (_) {}
+}
+
+/// Whether Gen Z mode is enabled (rewrites output in Gen Z style).
+Future<bool> loadGenZEnabled() async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_genZEnabledKey) ?? false;
+  } catch (_) {
+    return false;
+  }
+}
+
+/// Saves the Gen Z mode setting.
+Future<void> saveGenZEnabled(bool value) async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_genZEnabledKey, value);
   } catch (_) {}
 }
 

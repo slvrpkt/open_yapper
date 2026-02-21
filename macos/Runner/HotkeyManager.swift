@@ -25,6 +25,9 @@ class HotkeyManager {
     var onStopPressed: (() -> Void)?
     var onHoldDown: (() -> Void)?
     var onHoldUp: (() -> Void)?
+    private var isStopHotkeyEnabled = false
+    /// Tracks when hold key was pressed so we can reliably detect release even if modifier flags differ.
+    private var holdKeyIsDown = false
 
     /// When set, the next key press is captured and sent here instead of triggering hotkeys.
     var onCaptureNextKey: ((Int, UInt64) -> Void)?
@@ -35,6 +38,10 @@ class HotkeyManager {
             stop: HotkeySpec(keyCode: stopKeyCode, flags: stopFlags),
             hold: HotkeySpec(keyCode: holdKeyCode, flags: holdFlags)
         )
+    }
+
+    func setStopHotkeyEnabled(_ enabled: Bool) {
+        isStopHotkeyEnabled = enabled
     }
 
     func start() {
@@ -63,6 +70,10 @@ class HotkeyManager {
 
     private func handleEvent(proxy: CGEventTapProxy, type: CGEventType, event: CGEvent) -> Unmanaged<CGEvent>? {
         if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
+            if holdKeyIsDown {
+                holdKeyIsDown = false
+                DispatchQueue.main.async { self.onHoldUp?() }  // Likely missed keyUp while tap was disabled
+            }
             if let eventTap { CGEvent.tapEnable(tap: eventTap, enable: true) }
             return Unmanaged.passRetained(event)
         }
@@ -87,16 +98,20 @@ class HotkeyManager {
                 DispatchQueue.main.async { self.onStartPressed?() }
                 return nil
             }
-            if config.stop.matches(keyCode: keyCode, flags: flags) {
+            if isStopHotkeyEnabled && config.stop.matches(keyCode: keyCode, flags: flags) {
                 DispatchQueue.main.async { self.onStopPressed?() }
                 return nil
             }
             if config.hold.matches(keyCode: keyCode, flags: flags) {
+                holdKeyIsDown = true
                 DispatchQueue.main.async { self.onHoldDown?() }
                 return nil
             }
         } else if type == .keyUp {
-            if config.hold.matches(keyCode: keyCode, flags: flags) {
+            // Match by keyCode only when we've tracked a hold-down. Modifier flags on keyUp
+            // can differ (e.g. user releases Ctrl before Space), causing us to miss the release.
+            if holdKeyIsDown && Int(keyCode) == config.hold.keyCode {
+                holdKeyIsDown = false
                 DispatchQueue.main.async { self.onHoldUp?() }
                 return nil
             }

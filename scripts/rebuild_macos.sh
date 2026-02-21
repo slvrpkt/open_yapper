@@ -20,7 +20,7 @@ flutter build macos
 
 echo ""
 echo "Done! Run the app with:"
-echo "  open build/macos/Build/Products/Release/open_yapper.app"
+echo "  open build/macos/Build/Products/Release/open yapper.app"
 echo ""
 echo "Or use: flutter run -d macos"
 echo ""

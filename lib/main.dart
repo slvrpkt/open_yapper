@@ -5,6 +5,7 @@ import 'screens/customization_screen.dart';
 import 'screens/history_screen.dart';
 // import 'screens/home_screen.dart'; // Commented out - History is main page
 import 'screens/settings_screen.dart';
+import 'screens/stats_screen.dart';
 import 'views/onboarding_view.dart';
 import 'widgets/screen_container.dart';
 import 'services/native_bridge.dart';
@@ -23,7 +24,12 @@ void main() async {
     loadModel: () async => 'gemini-flash-lite-latest',
   );
 
-  NativeBridge.instance.setHotkeyCallback(() => recordingService.toggleRecording());
+  NativeBridge.instance.setHotkeyCallbacks(
+    onStart: () => recordingService.startRecording(),
+    onStop: () => recordingService.stopRecording(),
+    onHoldDown: () => recordingService.startRecording(),
+    onHoldUp: () => recordingService.stopRecording(),
+  );
   NativeBridge.instance.setCancelCallback(() => recordingService.cancelRecordingOrProcessing());
 
   runApp(
@@ -35,6 +41,15 @@ void main() async {
 
   // Start hotkey listener after the window is created and platform channel is ready
   WidgetsBinding.instance.addPostFrameCallback((_) async {
+    final config = await loadHotkeyConfig();
+    await NativeBridge.instance.setHotkeyConfig(
+      startKeyCode: config.startKeyCode,
+      startFlags: config.startFlags,
+      stopKeyCode: config.stopKeyCode,
+      stopFlags: config.stopFlags,
+      holdKeyCode: config.holdKeyCode,
+      holdFlags: config.holdFlags,
+    );
     await NativeBridge.instance.startHotkeyListener();
   });
 }
@@ -56,7 +71,7 @@ class MainApp extends StatelessWidget {
       title: 'Open Yapper',
       theme: materialTheme.light(),
       darkTheme: materialTheme.dark(),
-      themeMode: ThemeMode.system,
+      themeMode: ThemeMode.dark,
       home: MainScaffold(
         recordingService: recordingService,
         historyService: historyService,
@@ -65,7 +80,7 @@ class MainApp extends StatelessWidget {
   }
 }
 
-enum RailDestination { history, customization, settings }
+enum RailDestination { history, stats, customization, settings }
 
 class AppSidebar extends StatelessWidget {
   const AppSidebar({
@@ -81,11 +96,11 @@ class AppSidebar extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     return ColoredBox(
-      color: colorScheme.surfaceContainer,
+      color: colorScheme.surfaceContainerHighest,
       child: NavigationRail(
         extended: false,
         backgroundColor: Colors.transparent,
-        indicatorColor: colorScheme.surface,
+        indicatorColor: colorScheme.primary,
         groupAlignment: 0.0,
         destinations: [
           NavigationRailDestination(
@@ -96,9 +111,12 @@ class AppSidebar extends StatelessWidget {
                 child: Icon(Symbols.history),
               ),
             ),
-            selectedIcon: const Tooltip(
-              message: 'History',
-              child: Icon(Symbols.history, fill: 1),
+            selectedIcon: IconTheme(
+              data: IconThemeData(color: colorScheme.surface),
+              child: const Tooltip(
+                message: 'History',
+                child: Icon(Symbols.history, fill: 1),
+              ),
             ),
             label: Text(
               'History',
@@ -109,13 +127,36 @@ class AppSidebar extends StatelessWidget {
             icon: IconTheme(
               data: IconThemeData(color: colorScheme.onSurfaceVariant),
               child: const Tooltip(
-                message: 'Customization',
-                child: Icon(Symbols.palette),
+                message: 'Stats',
+                child: Icon(Symbols.emoji_events),
               ),
             ),
-            selectedIcon: const Tooltip(
-              message: 'Customization',
-              child: Icon(Symbols.palette, fill: 1),
+            selectedIcon: IconTheme(
+              data: IconThemeData(color: colorScheme.surface),
+              child: const Tooltip(
+                message: 'Stats',
+                child: Icon(Symbols.emoji_events, fill: 1),
+              ),
+            ),
+            label: Text(
+              'Stats',
+              style: Theme.of(context).textTheme.labelLarge,
+            ),
+          ),
+          NavigationRailDestination(
+            icon: IconTheme(
+              data: IconThemeData(color: colorScheme.onSurfaceVariant),
+              child: const Tooltip(
+                message: 'Customization',
+                child: Icon(Symbols.tune),
+              ),
+            ),
+            selectedIcon: IconTheme(
+              data: IconThemeData(color: colorScheme.surface),
+              child: const Tooltip(
+                message: 'Customization',
+                child: Icon(Symbols.tune, fill: 1),
+              ),
             ),
             label: Text(
               'Customization',
@@ -130,9 +171,12 @@ class AppSidebar extends StatelessWidget {
                 child: Icon(Symbols.settings),
               ),
             ),
-            selectedIcon: const Tooltip(
-              message: 'Settings',
-              child: Icon(Symbols.settings, fill: 1),
+            selectedIcon: IconTheme(
+              data: IconThemeData(color: colorScheme.surface),
+              child: const Tooltip(
+                message: 'Settings',
+                child: Icon(Symbols.settings, fill: 1),
+              ),
             ),
             label: Text(
               'Settings',
@@ -184,26 +228,12 @@ class _MainScaffoldState extends State<MainScaffold> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const SizedBox(height: 8),
-                      AppBar(
-                        title: Text(
-                          switch (_selectedDestination) {
-                            RailDestination.history => 'History',
-                            RailDestination.customization => 'Customization',
-                            RailDestination.settings => 'Settings',
-                          },
-                          style: Theme.of(context).textTheme.headlineMedium,
-                        ),
-                        backgroundColor: Colors.transparent,
-                        elevation: 0,
-                        scrolledUnderElevation: 0,
-                        centerTitle: false,
-                        leadingWidth: 0,
-                        titleSpacing: 24,
-                      ),
                       Expanded(
                         child: switch (_selectedDestination) {
                           RailDestination.history => HistoryScreen(
+                              historyService: widget.historyService,
+                            ),
+                          RailDestination.stats => StatsScreen(
                               historyService: widget.historyService,
                             ),
                           RailDestination.customization => CustomizationScreen(
@@ -211,7 +241,17 @@ class _MainScaffoldState extends State<MainScaffold> {
                             ),
                           RailDestination.settings => SettingsScreen(
                               recordingService: widget.recordingService,
-                              onHotKeyChanged: () {},
+                              onHotKeyChanged: () async {
+                                final config = await loadHotkeyConfig();
+                                await NativeBridge.instance.setHotkeyConfig(
+                                  startKeyCode: config.startKeyCode,
+                                  startFlags: config.startFlags,
+                                  stopKeyCode: config.stopKeyCode,
+                                  stopFlags: config.stopFlags,
+                                  holdKeyCode: config.holdKeyCode,
+                                  holdFlags: config.holdFlags,
+                                );
+                              },
                             ),
                         },
                       ),

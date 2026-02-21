@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Anton, Space_Grotesk } from "next/font/google";
 import { SmoothScroll } from "@/components/SmoothScroll";
+import { Analytics } from "@/components/Analytics";
 import "./globals.css";
 
 const anton = Anton({
@@ -62,6 +63,7 @@ export default function RootLayout({
       <body
         className={`${anton.variable} ${spaceGrotesk.variable} antialiased`}
       >
+        <Analytics />
         <SmoothScroll>{children}</SmoothScroll>
       </body>
     </html>
