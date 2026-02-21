@@ -25,7 +25,7 @@ void main() async {
   );
 
   NativeBridge.instance.setHotkeyCallbacks(
-    onStart: () => recordingService.startRecording(),
+    onStart: () => recordingService.toggleRecording(),
     onStop: () => recordingService.stopRecording(),
     onHoldDown: () => recordingService.startRecording(),
     onHoldUp: () => recordingService.stopRecording(),
