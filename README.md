@@ -1,6 +1,6 @@
 ![Open Yapper Screenshot](assets/Screenshot%202026-02-22%20at%2017.34.42.png)
 
-# Open Yapper (OY!) — Cursor Hackathon 2026 Vancouver Winner
+# [Open Yapper](https://www.openyapper.com) (OY!) — Cursor Hackathon 2026 Vancouver Winner
 
 **Done in 4 hours @ Cursor Hackathon** — Full app + Landing page  
 **Winner** — Cursor Hackathon 2026 (Vancouver)
@@ -9,7 +9,7 @@
 
 ## What is Open Yapper?
 
-**Open Yapper** (OY!) is the GEN Z voice dictation app. It's an open-source clone of [Wispr Flow](https://whisperflow.app/) / Wisper Flow—ramble naturally, AI cleans the mess, no cap.
+**Open Yapper** (OY!) is the GEN Z voice dictation app. It's an open-source clone of [Wispr Flow](https://wisprflow.ai/)—ramble naturally, AI cleans the mess, no cap.
 
 Stop typing, start talking. Speak into your mic, and Open Yapper transcribes your voice, removes filler words (um, uh, like, you know), and turns your rambled thoughts into polished text ready to paste anywhere—Gmail, Slack, Notes, ChatGPT, you name it.
 
