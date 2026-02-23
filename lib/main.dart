@@ -49,6 +49,9 @@ void main() async {
       stopFlags: config.stopFlags,
       holdKeyCode: config.holdKeyCode,
       holdFlags: config.holdFlags,
+      startEnabled: config.startEnabled,
+      stopEnabled: config.stopEnabled,
+      holdEnabled: config.holdEnabled,
     );
     await NativeBridge.instance.startHotkeyListener();
   });
@@ -250,6 +253,9 @@ class _MainScaffoldState extends State<MainScaffold> {
                                   stopFlags: config.stopFlags,
                                   holdKeyCode: config.holdKeyCode,
                                   holdFlags: config.holdFlags,
+                                  startEnabled: config.startEnabled,
+                                  stopEnabled: config.stopEnabled,
+                                  holdEnabled: config.holdEnabled,
                                 );
                               },
                             ),

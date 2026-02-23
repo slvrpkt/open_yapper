@@ -8,11 +8,13 @@ import '../widgets/pasteable_text_field.dart';
 
 /// Formats a hotkey (keyCode + modifier flags) for display.
 String formatHotkeyDisplay(int keyCode, int flags) {
-  const modifierSymbols = {
-    0x20000: '⇧', // Shift
+  // Keep macOS modifier order consistent with menu item display.
+  const modifierSymbols = <int, String>{
     0x40000: '⌃', // Control
     0x80000: '⌥', // Option
+    0x20000: '⇧', // Shift
     0x100000: '⌘', // Command
+    0x800000: 'fn', // Function (Globe/Fn)
   };
   final parts = <String>[];
   for (final entry in modifierSymbols.entries) {
@@ -26,18 +28,7 @@ String formatHotkeyDisplay(int keyCode, int flags) {
 /// These codes are physical key positions on a US QWERTY keyboard.
 String _keyCodeToLabel(int code) {
   const labels = {
-    // Special keys (layout-independent)
-    36: 'Return',
-    48: 'Tab',
-    49: 'Space',
-    51: 'Delete',
-    53: 'Escape',
-    117: 'Forward Delete',
-    123: '←',
-    124: '→',
-    125: '↓',
-    126: '↑',
-    // Letter keys (ANSI / US QWERTY physical positions)
+    // Letters
     0: 'A',
     1: 'S',
     2: 'D',
@@ -55,6 +46,16 @@ String _keyCodeToLabel(int code) {
     15: 'R',
     16: 'Y',
     17: 'T',
+    31: 'O',
+    32: 'U',
+    34: 'I',
+    35: 'P',
+    37: 'L',
+    38: 'J',
+    40: 'K',
+    45: 'N',
+    46: 'M',
+    // Number row
     18: '1',
     19: '2',
     20: '3',
@@ -67,24 +68,89 @@ String _keyCodeToLabel(int code) {
     27: '-',
     28: '8',
     29: '0',
+    // Symbols
     30: ']',
-    31: 'O',
-    32: 'U',
     33: '[',
-    34: 'I',
-    35: 'P',
-    37: 'L',
-    38: 'J',
     39: "'",
-    40: 'K',
     41: ';',
     42: '\\',
     43: ',',
     44: '/',
-    45: 'N',
-    46: 'M',
     47: '.',
     50: '`',
+    // Main keyboard / navigation
+    36: 'Return',
+    48: 'Tab',
+    49: 'Space',
+    51: 'Delete',
+    53: 'Escape',
+    54: 'Right Command',
+    55: 'Command',
+    56: 'Shift',
+    57: 'Caps Lock',
+    58: 'Option',
+    59: 'Control',
+    60: 'Right Shift',
+    61: 'Right Option',
+    62: 'Right Control',
+    63: 'Fn',
+    65: 'Keypad .',
+    67: 'Keypad *',
+    69: 'Keypad +',
+    71: 'Clear',
+    72: 'Volume Up',
+    73: 'Volume Down',
+    74: 'Mute',
+    75: 'Keypad /',
+    76: 'Keypad Enter',
+    78: 'Keypad -',
+    81: 'Keypad =',
+    82: 'Keypad 0',
+    83: 'Keypad 1',
+    84: 'Keypad 2',
+    85: 'Keypad 3',
+    86: 'Keypad 4',
+    87: 'Keypad 5',
+    88: 'Keypad 6',
+    89: 'Keypad 7',
+    91: 'Keypad 8',
+    92: 'Keypad 9',
+    96: 'F5',
+    97: 'F6',
+    98: 'F7',
+    99: 'F3',
+    100: 'F8',
+    101: 'F9',
+    103: 'F11',
+    105: 'F13',
+    106: 'F16',
+    107: 'F14',
+    109: 'F10',
+    111: 'F12',
+    113: 'F15',
+    114: 'Help',
+    115: 'Home',
+    116: 'Page Up',
+    117: 'Forward Delete',
+    118: 'F4',
+    119: 'End',
+    120: 'F2',
+    121: 'Page Down',
+    122: 'F1',
+    123: '←',
+    124: '→',
+    125: '↓',
+    126: '↑',
+    // ISO / JIS layout-specific keys
+    10: 'Section',
+    93: 'Yen',
+    94: 'Underscore',
+    95: 'Keypad Comma',
+    // Additional function keys
+    64: 'F17',
+    79: 'F18',
+    80: 'F19',
+    90: 'F20',
   };
   return labels[code] ?? 'Key $code';
 }
@@ -160,6 +226,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             stopFlags: _hotkeyConfig.stopFlags,
             holdKeyCode: _hotkeyConfig.holdKeyCode,
             holdFlags: _hotkeyConfig.holdFlags,
+            startEnabled: _hotkeyConfig.startEnabled,
+            stopEnabled: _hotkeyConfig.stopEnabled,
+            holdEnabled: _hotkeyConfig.holdEnabled,
           ),
         'stop' => HotkeyConfig(
             startKeyCode: _hotkeyConfig.startKeyCode,
@@ -168,6 +237,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             stopFlags: captured['flags']!,
             holdKeyCode: _hotkeyConfig.holdKeyCode,
             holdFlags: _hotkeyConfig.holdFlags,
+            startEnabled: _hotkeyConfig.startEnabled,
+            stopEnabled: _hotkeyConfig.stopEnabled,
+            holdEnabled: _hotkeyConfig.holdEnabled,
           ),
         'hold' => HotkeyConfig(
             startKeyCode: _hotkeyConfig.startKeyCode,
@@ -176,6 +248,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             stopFlags: _hotkeyConfig.stopFlags,
             holdKeyCode: captured['keyCode']!,
             holdFlags: captured['flags']!,
+            startEnabled: _hotkeyConfig.startEnabled,
+            stopEnabled: _hotkeyConfig.stopEnabled,
+            holdEnabled: _hotkeyConfig.holdEnabled,
           ),
         _ => _hotkeyConfig,
       };
@@ -198,6 +273,50 @@ class _SettingsScreenState extends State<SettingsScreen> {
         );
       }
     }
+  }
+
+  Future<void> _saveHotkeyEnabled(String which, bool enabled) async {
+    final newConfig = switch (which) {
+      'start' => HotkeyConfig(
+          startKeyCode: _hotkeyConfig.startKeyCode,
+          startFlags: _hotkeyConfig.startFlags,
+          stopKeyCode: _hotkeyConfig.stopKeyCode,
+          stopFlags: _hotkeyConfig.stopFlags,
+          holdKeyCode: _hotkeyConfig.holdKeyCode,
+          holdFlags: _hotkeyConfig.holdFlags,
+          startEnabled: enabled,
+          stopEnabled: _hotkeyConfig.stopEnabled,
+          holdEnabled: _hotkeyConfig.holdEnabled,
+        ),
+      'stop' => HotkeyConfig(
+          startKeyCode: _hotkeyConfig.startKeyCode,
+          startFlags: _hotkeyConfig.startFlags,
+          stopKeyCode: _hotkeyConfig.stopKeyCode,
+          stopFlags: _hotkeyConfig.stopFlags,
+          holdKeyCode: _hotkeyConfig.holdKeyCode,
+          holdFlags: _hotkeyConfig.holdFlags,
+          startEnabled: _hotkeyConfig.startEnabled,
+          stopEnabled: enabled,
+          holdEnabled: _hotkeyConfig.holdEnabled,
+        ),
+      'hold' => HotkeyConfig(
+          startKeyCode: _hotkeyConfig.startKeyCode,
+          startFlags: _hotkeyConfig.startFlags,
+          stopKeyCode: _hotkeyConfig.stopKeyCode,
+          stopFlags: _hotkeyConfig.stopFlags,
+          holdKeyCode: _hotkeyConfig.holdKeyCode,
+          holdFlags: _hotkeyConfig.holdFlags,
+          startEnabled: _hotkeyConfig.startEnabled,
+          stopEnabled: _hotkeyConfig.stopEnabled,
+          holdEnabled: enabled,
+        ),
+      _ => _hotkeyConfig,
+    };
+
+    await saveHotkeyConfig(newConfig);
+    if (!mounted) return;
+    setState(() => _hotkeyConfig = newConfig);
+    widget.onHotKeyChanged();
   }
 
   Future<void> _saveApiKey() async {
@@ -333,7 +452,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     description: 'Press to begin recording',
                     keyCode: _hotkeyConfig.startKeyCode,
                     flags: _hotkeyConfig.startFlags,
+                    enabled: _hotkeyConfig.startEnabled,
                     isCapturing: _capturingHotkey == 'start',
+                    onToggleEnabled: (value) =>
+                        _saveHotkeyEnabled('start', value),
                     onEdit: () => _captureAndSaveHotkey('start'),
                   ),
                   const SizedBox(height: 12),
@@ -342,7 +464,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     description: 'Press to stop and process',
                     keyCode: _hotkeyConfig.stopKeyCode,
                     flags: _hotkeyConfig.stopFlags,
+                    enabled: _hotkeyConfig.stopEnabled,
                     isCapturing: _capturingHotkey == 'stop',
+                    onToggleEnabled: (value) =>
+                        _saveHotkeyEnabled('stop', value),
                     onEdit: () => _captureAndSaveHotkey('stop'),
                   ),
                   const SizedBox(height: 12),
@@ -351,7 +476,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     description: 'Hold to record, release to stop',
                     keyCode: _hotkeyConfig.holdKeyCode,
                     flags: _hotkeyConfig.holdFlags,
+                    enabled: _hotkeyConfig.holdEnabled,
                     isCapturing: _capturingHotkey == 'hold',
+                    onToggleEnabled: (value) =>
+                        _saveHotkeyEnabled('hold', value),
                     onEdit: () => _captureAndSaveHotkey('hold'),
                   ),
                 ],
@@ -392,7 +520,9 @@ class _HotkeyRow extends StatelessWidget {
     required this.description,
     required this.keyCode,
     required this.flags,
+    required this.enabled,
     required this.isCapturing,
+    required this.onToggleEnabled,
     required this.onEdit,
   });
 
@@ -400,7 +530,9 @@ class _HotkeyRow extends StatelessWidget {
   final String description;
   final int keyCode;
   final int flags;
+  final bool enabled;
   final bool isCapturing;
+  final ValueChanged<bool> onToggleEnabled;
   final VoidCallback onEdit;
 
   @override
@@ -428,11 +560,20 @@ class _HotkeyRow extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 16),
+        Switch(
+          value: enabled,
+          onChanged: onToggleEnabled,
+        ),
+        const SizedBox(width: 8),
         // Key-like display (replication of actual button)
         Container(
           constraints: const BoxConstraints(minWidth: 120, minHeight: 44),
           decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceContainerHighest,
+            color: enabled
+                ? theme.colorScheme.surfaceContainerHighest
+                : theme.colorScheme.surfaceContainerHighest.withValues(
+                    alpha: 0.6,
+                  ),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color: theme.colorScheme.outline.withValues(alpha: 0.5),
@@ -456,10 +597,13 @@ class _HotkeyRow extends StatelessWidget {
                     ),
                   )
                 : Text(
-                    display,
+                    enabled ? display : 'Disabled',
                     style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w600,
                       letterSpacing: 0.5,
+                      color: enabled
+                          ? null
+                          : theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
           ),

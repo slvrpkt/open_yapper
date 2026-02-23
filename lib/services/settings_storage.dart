@@ -14,6 +14,9 @@ const _hotkeyStopKeyCodeKey = 'hotkey_stop_keycode';
 const _hotkeyStopFlagsKey = 'hotkey_stop_flags';
 const _hotkeyHoldKeyCodeKey = 'hotkey_hold_keycode';
 const _hotkeyHoldFlagsKey = 'hotkey_hold_flags';
+const _hotkeyStartEnabledKey = 'hotkey_start_enabled';
+const _hotkeyStopEnabledKey = 'hotkey_stop_enabled';
+const _hotkeyHoldEnabledKey = 'hotkey_hold_enabled';
 
 /// Hotkey configuration for global shortcuts.
 class HotkeyConfig {
@@ -24,6 +27,9 @@ class HotkeyConfig {
     required this.stopFlags,
     required this.holdKeyCode,
     required this.holdFlags,
+    required this.startEnabled,
+    required this.stopEnabled,
+    required this.holdEnabled,
   });
 
   final int startKeyCode;
@@ -32,6 +38,9 @@ class HotkeyConfig {
   final int stopFlags;
   final int holdKeyCode;
   final int holdFlags;
+  final bool startEnabled;
+  final bool stopEnabled;
+  final bool holdEnabled;
 
   static const HotkeyConfig defaultConfig = HotkeyConfig(
     startKeyCode: 49, // kVK_Space
@@ -40,6 +49,9 @@ class HotkeyConfig {
     stopFlags: 0x80000, // maskAlternate (Option)
     holdKeyCode: 49, // kVK_Space
     holdFlags: 0x40000, // maskControl (Control) - avoids Cmd+Space (Spotlight)
+    startEnabled: true,
+    stopEnabled: true,
+    holdEnabled: true,
   );
 }
 
@@ -198,6 +210,9 @@ Future<HotkeyConfig> loadHotkeyConfig() async {
     final stopFlags = prefs.getInt(_hotkeyStopFlagsKey);
     final holdKeyCode = prefs.getInt(_hotkeyHoldKeyCodeKey);
     final holdFlags = prefs.getInt(_hotkeyHoldFlagsKey);
+    final startEnabled = prefs.getBool(_hotkeyStartEnabledKey) ?? true;
+    final stopEnabled = prefs.getBool(_hotkeyStopEnabledKey) ?? true;
+    final holdEnabled = prefs.getBool(_hotkeyHoldEnabledKey) ?? true;
 
     if (startKeyCode != null &&
         startFlags != null &&
@@ -212,6 +227,9 @@ Future<HotkeyConfig> loadHotkeyConfig() async {
         stopFlags: stopFlags,
         holdKeyCode: holdKeyCode,
         holdFlags: holdFlags,
+        startEnabled: startEnabled,
+        stopEnabled: stopEnabled,
+        holdEnabled: holdEnabled,
       );
     }
   } catch (_) {}
@@ -228,5 +246,8 @@ Future<void> saveHotkeyConfig(HotkeyConfig config) async {
     await prefs.setInt(_hotkeyStopFlagsKey, config.stopFlags);
     await prefs.setInt(_hotkeyHoldKeyCodeKey, config.holdKeyCode);
     await prefs.setInt(_hotkeyHoldFlagsKey, config.holdFlags);
+    await prefs.setBool(_hotkeyStartEnabledKey, config.startEnabled);
+    await prefs.setBool(_hotkeyStopEnabledKey, config.stopEnabled);
+    await prefs.setBool(_hotkeyHoldEnabledKey, config.holdEnabled);
   } catch (_) {}
 }

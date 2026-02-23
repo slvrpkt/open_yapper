@@ -61,13 +61,19 @@ class NativeChannelHandler: NSObject {
                 result(FlutterError(code: "INVALID_ARGS", message: "Missing hotkey config", details: nil))
                 return
             }
+            let startEnabled = args["startEnabled"] as? Bool ?? true
+            let stopEnabled = args["stopEnabled"] as? Bool ?? true
+            let holdEnabled = args["holdEnabled"] as? Bool ?? true
             hotkeyManager.setConfig(
                 startKeyCode: skc,
                 startFlags: UInt64(sfl),
                 stopKeyCode: stkc,
                 stopFlags: UInt64(stfl),
                 holdKeyCode: hkc,
-                holdFlags: UInt64(hfl)
+                holdFlags: UInt64(hfl),
+                startEnabled: startEnabled,
+                stopEnabled: stopEnabled,
+                holdEnabled: holdEnabled
             )
             result(true)
 

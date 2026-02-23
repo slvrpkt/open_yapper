@@ -63,6 +63,9 @@ class NativeBridge {
     required int stopFlags,
     required int holdKeyCode,
     required int holdFlags,
+    required bool startEnabled,
+    required bool stopEnabled,
+    required bool holdEnabled,
   }) async {
     await _channel.invokeMethod('setHotkeyConfig', {
       'startKeyCode': startKeyCode,
@@ -71,6 +74,9 @@ class NativeBridge {
       'stopFlags': stopFlags,
       'holdKeyCode': holdKeyCode,
       'holdFlags': holdFlags,
+      'startEnabled': startEnabled,
+      'stopEnabled': stopEnabled,
+      'holdEnabled': holdEnabled,
     });
   }
 
