@@ -85,7 +85,7 @@ flutter build macos --release
 build/macos/Build/Products/Release/
 ```
 
-5. Drag `open_yapper.app` into **Applications**
+5. Drag `Open Yapper.app` into **Applications**
 6. Launch from Applications from now on (no IDE needed)
 
 ### First launch checklist
@@ -104,7 +104,7 @@ flutter pub get
 flutter build macos --release
 ```
 
-Then replace the old app in Applications with the new `open_yapper.app`.
+Then replace the old app in Applications with the new `Open Yapper.app`.
 
 ---
 
@@ -174,6 +174,21 @@ Grant both in System Settings when prompted.
 - Or hold the hotkey to record while pressed
 - Speak naturally—the AI will clean up filler words and format the output
 - The text is pasted into the currently focused app when done
+
+### Voice formatting commands
+
+Open Yapper can treat spoken formatting requests as instructions and shape output automatically.
+
+- **Email formatting (explicit):**  
+  Say: `Format this as an email ...`  
+  Result: email output with `Subject:` line + body, without the control phrase text.
+- **To-do or list formatting (explicit):**  
+  Say: `Add this to my to-do list ...` or `Make this a list ...`  
+  Result: one bullet per task item.
+- **Implicit format inference:**  
+  If you do not say an explicit command, Open Yapper infers format from context (e.g., greeting/sign-off for email, sequential cues for numbered steps).
+- **Fallback behavior:**  
+  If intent is unclear, output falls back to clean paragraph text.
 
 ---
 

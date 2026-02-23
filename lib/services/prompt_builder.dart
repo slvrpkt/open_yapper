@@ -27,9 +27,11 @@ class PromptBuilder {
         ? 'The user is speaking into "$targetApp". Use this as a hint for formatting (e.g., Mail app suggests email format, Notes suggests flexible structure).'
         : 'Use context clues from the content to determine the best format.';
 
-    final toneInstruction = _toneInstructions[tone] ?? _toneInstructions[_defaultTone]!;
+    final toneInstruction =
+        _toneInstructions[tone] ?? _toneInstructions[_defaultTone]!;
 
-    final hasCustomPrompt = customPrompt != null && customPrompt.trim().isNotEmpty;
+    final hasCustomPrompt =
+        customPrompt != null && customPrompt.trim().isNotEmpty;
     final customSection = hasCustomPrompt
         ? '''
 
@@ -63,12 +65,44 @@ INSTRUCTION PRIORITY:
 
 4. TONE: $toneInstruction
 
-5. FORMAT: Adapt output based on content:
-   - Shopping lists, task lists, to-dos → use bullet points (• or -)
-   - Emails → format with subject line and body
-   - Casual conversation → natural paragraphs
-   - Formal correspondence → structured, professional layout
-   - Long-form text (more than 4 sentences) → split into short paragraphs (1-3 sentences each) with exactly one blank line between paragraphs.
+5. FORMAT INTENT (CRITICAL):
+   Spoken control phrases are instructions, not content. Treat these as formatting commands and remove them from the final text:
+   - "format this as an email"
+   - "make this a to-do list"
+   - "make this a list"
+   - "add this to my to-do list"
+   - "add this to list"
+   - Similar command-style phrases that direct output shape
+
+   Supported formats: email, todoList, bulletList, numberedSteps, paragraph.
+   Format selection rules:
+   - If the user gives an explicit command, follow that format.
+   - If no explicit command appears, infer format from content cues:
+     - Greeting + sign-off cues -> email
+     - Action items/tasks/shopping items -> todoList or bulletList
+     - Sequential cues ("first", "then", "finally", steps) -> numberedSteps
+     - Multi-action request cues (for example: "do these three things", "please do these 3 tasks", "can you handle the following") -> numberedSteps
+     - If multiple imperative actions are provided after a colon or joined by commas/and, split into one item per line
+     - Otherwise -> paragraph
+   - if format intent is unclear, default to paragraph.
+
+   Format output requirements:
+   - email -> include "Subject: <concise subject>" on first line, then body.
+   - todoList -> keep the speaker's own lead-in/context line when present, then one task per bullet line using "- ".
+   - bulletList -> keep the speaker's own lead-in/context line when present, then concise bullet lines using "- ".
+   - numberedSteps -> keep the speaker's own lead-in/context line when present, then use "1. 2. 3." style ordering, one concrete action per line.
+   - If the speaker references a count ("two things", "3 tasks"), match that intent by producing a numbered list when content supports tasks/actions.
+   - Never invent a new list title that was not stated by the speaker. Reuse the user's own context line instead.
+   - If the user gave no lead-in/context sentence, start directly with the list (no synthetic heading).
+   - Preserve context in every list item. Never over-compress or strip details that make an item ambiguous.
+   - Keep each item self-contained and clear, even when source speech includes shared context across items.
+   - paragraph -> clean natural prose.
+
+   Precedence for format decisions:
+   - explicit spoken format command
+   - USER INSTRUCTIONS FOR THIS APP (style/detail constraints)
+   - app context hints
+   - inferred content cues
 
 6. CONTEXT: $appContext
 
@@ -79,7 +113,8 @@ INSTRUCTION PRIORITY:
     final appHint = targetApp != null && targetApp.isNotEmpty
         ? ' The user is pasting into "$targetApp"—adapt format if needed (e.g., email, notes).'
         : '';
-    final hasCustomPrompt = customPrompt != null && customPrompt.trim().isNotEmpty;
+    final hasCustomPrompt =
+        customPrompt != null && customPrompt.trim().isNotEmpty;
     final customSection = hasCustomPrompt
         ? '''
 
@@ -99,7 +134,12 @@ INSTRUCTION PRIORITY:
 GEN Z OVERRIDE (this overrides all other tone settings):
 - Rewrite whatever the user said into Gen Z language. Use slang naturally: lowkey, highkey, no cap, slay, vibe, bussin, it's giving, fr fr, bestie, main character energy, etc.
 - Keep it funny and lighthearted. Add wit and playful energy. The output should make someone smile.
-- Preserve the full context and meaning—if they're writing an email, keep it as an email; if it's a list, keep it as a list; if it's a thought, keep the thought. Only the wording changes.
+- Preserve the full context and meaning—if they're writing an email, keep that format; if it's a list, keep that format; if it's a thought, keep the thought. Only the wording changes.
+- Treat spoken control phrases as instructions (not content) and remove them from final output, such as "format this as an email" or "add this to my to-do list".
+- If no explicit control phrase appears, infer the most likely format from content (email, todoList/bulletList, numberedSteps, paragraph) and preserve that structure.
+- For multi-action task requests ("do these three things", "handle the following"), prefer numberedSteps and split each action into its own line.
+- For any bulletList, todoList, or numberedSteps output, keep the user's own lead-in/context line when present and do not invent a new title.
+- Preserve context in each list item so every line stays complete and clear.
 - Still remove all filler words (um, uh, oh, like, so, etc.) from the original speech.
 - If the speaker self-corrects, keep only the final corrected version and remove the earlier mistaken phrasing.
 - Remove spoken punctuation artifacts like "comma" and "period" unless clearly intended as literal content.

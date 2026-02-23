@@ -8,7 +8,7 @@
 PRODUCT_NAME = Open Yapper
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.example.openYapper
+PRODUCT_BUNDLE_IDENTIFIER = com.matin.openYapper
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Open Yapper - The GEN Z voice dictation app. Stop typing, start talking.

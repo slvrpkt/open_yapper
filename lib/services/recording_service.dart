@@ -18,7 +18,7 @@ import 'user_profile_service.dart';
 
 /// Service that manages voice recording, Gemini processing, and paste.
 class RecordingService extends ChangeNotifier {
-  static const double _minimumProcessableDurationSeconds = 2.0;
+  static const double _minimumProcessableDurationSeconds = 0.5;
 
   RecordingService({
     RecordingHistoryService? historyService,
@@ -198,7 +198,7 @@ class RecordingService extends ChangeNotifier {
       await _native.dismissRecordingOverlay();
       _lastError =
           'Recording too short. Please speak for at least '
-          '${_minimumProcessableDurationSeconds.toStringAsFixed(0)} seconds.';
+          '${_minimumProcessableDurationSeconds.toStringAsFixed(1)} seconds.';
       if (path != null) {
         try {
           await File(path).delete();
