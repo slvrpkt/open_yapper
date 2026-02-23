@@ -18,9 +18,14 @@ Stop typing, start talking. Speak into your mic, and Open Yapper transcribes you
 - **Voice-to-text transcription** — Record your voice and get clean, formatted text
 - **Filler word removal** — Automatically strips "um," "uh," "like," and other verbal hiccups
 - **Gen Z mode** — Optional rewrite into Gen Z slang (lowkey, no cap, slay, it's giving, etc.)
-- **Per-app customization** — Set tone (casual, formal, etc.) and target app hints
-- **Global hotkeys** — Press **⌥ Space** (Option+Space) to start/stop recording on macOS
+- **Dictionary memory** — Manage Corrections, Frequent Terms, and Suggestions with enable/disable controls
+- **User info aliases** — Save personal fields (email, phone, links, etc.) so phrases like "my email" auto-expand
+- **Phrase expansion pipeline** — Expands user aliases + dictionary replacements before pasting
+- **Model selection** — Choose between Gemini Flash Lite Latest (default) and Gemini Flash Latest
+- **Per-app customization** — Configure tone + advanced custom prompt per app (Default + app-specific overrides)
+- **Global hotkeys** — Configure start, stop, and hold-to-record hotkeys (all independently editable)
 - **History & stats** — Browse past recordings, copy text, and see usage stats
+- **Built-in update checks** — Launch + manual update checks with release notes preview
 - **Paste anywhere** — Uses accessibility APIs to paste directly into the focused app
 
 ### Tech Stack
@@ -172,14 +177,62 @@ Grant both in System Settings when prompted.
 
 ---
 
+## New Feature Guide
+
+### Dictionary
+
+- Open the **Dictionary** tab from the left sidebar
+- Manage three buckets: **Corrections**, **Frequent Terms**, and **Suggestions**
+- Add/edit manual entries, enable/disable entries, accept suggestions, and delete entries
+- Frequent terms are learned automatically from past processed text
+
+### User Info
+
+- Open **User Info** to save profile fields (name, email, phone, LinkedIn, GitHub, website, Twitter/X, Instagram)
+- Add custom aliases like `my portfolio` -> your actual link
+- Use **Alias preview** to see exactly what phrases will expand
+
+### Text Expansion
+
+- In **Settings > Text Expansion**, turn **Phrase Expansion** on/off
+- When enabled, Open Yapper expands:
+  - User Info aliases (like "my email")
+  - Enabled dictionary replacements/corrections
+- Expansion runs automatically after Gemini processing and before paste
+
+### Model Selection
+
+- In **Settings > Model Selection**, pick your Gemini model:
+  - `gemini-flash-lite-latest` (default, lower cost)
+  - `gemini-flash-latest` (higher quality, higher cost)
+- The selected model is used for all new recordings until changed
+
+### Settings (Current)
+
+- **Output**
+  - Gen Z mode toggle
+- **Text Expansion**
+  - Phrase expansion toggle
+- **Gemini**
+  - API key save/view (stored in macOS Keychain)
+  - Model selector
+- **Global Hotkeys**
+  - Enable/disable and remap Start, Stop, and Hold hotkeys
+- **Permissions**
+  - Microphone + Accessibility status with quick links to system settings
+- **Updates**
+  - Check for updates button + version display
+
+---
+
 ## Project Structure
 
 ```
 open_yapper/
 ├── lib/
 │   ├── main.dart              # App entry, navigation, hotkey wiring
-│   ├── screens/               # History, Stats, Customization, Settings
-│   ├── services/              # Recording, Gemini, native bridge, storage
+│   ├── screens/               # History, Dictionary, User Info, Stats, Customization, Settings
+│   ├── services/              # Recording, Gemini, dictionary, profile, phrase expansion, settings
 │   ├── views/                 # Onboarding flow
 │   └── widgets/               # Reusable UI components
 ├── macos/                     # macOS native code (hotkeys, permissions)
@@ -194,10 +247,13 @@ open_yapper/
 
 ## Configuration
 
-- **Hotkeys** — Change start/stop/hold hotkeys in Settings
-- **Tone** — Choose casual, normal, informal, or formal
-- **Gen Z mode** — Toggle in Customization to rewrite output in Gen Z slang
-- **Target app** — Optional hint (e.g., "Gmail") for format adaptation
+- **Hotkeys** — Enable/disable + remap start, stop, and hold shortcuts in Settings
+- **Tone** — Choose casual, normal, informal, or formal per app in Customization
+- **Advanced app prompts** — Add per-app writing instructions in Customization (Advanced mode)
+- **Gen Z mode** — Toggle in Settings > Output
+- **Phrase expansion** — Toggle in Settings > Text Expansion
+- **Model** — Select Gemini model in Settings > Model Selection
+- **Dictionary & aliases** — Configure replacements in Dictionary and User Info
 
 ---
 
