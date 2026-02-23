@@ -19,13 +19,20 @@ The macOS prebuilt download is currently unavailable on the website.
 
 Use this if you want your own personal build from source code.
 
-1. Install Flutter once: [Flutter install guide](https://docs.flutter.dev/get-started/install/macos)
-2. Clone this repository:
+1. Clone this repository:
 
 ```bash
 git clone <repo-url>
 cd open_yapper
 ```
+
+2. Install Flutter automatically (recommended):
+
+```bash
+bash scripts/setup_flutter_macos.sh
+```
+
+If you prefer manual installation, use the official guide: [Flutter install guide](https://docs.flutter.dev/get-started/install/macos)
 
 3. Run:
 
