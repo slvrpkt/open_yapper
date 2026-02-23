@@ -2,6 +2,10 @@
 
 import { motion } from "motion/react";
 
+const DOWNLOAD_URL =
+  process.env.NEXT_PUBLIC_DOWNLOAD_URL ||
+  "https://github.com/Matinrahimik/open_yapper/releases/latest/download/open_yapper.dmg";
+
 export function HeroSection() {
   return (
     <section
@@ -50,7 +54,7 @@ export function HeroSection() {
 
         <div className="mt-12 flex flex-col items-center gap-4 sm:flex-row">
           <motion.a
-            href="https://github.com/Matinrahimik/open_yapper/releases/latest/download/open_yapper.dmg"
+            href={DOWNLOAD_URL}
             download="Open Yapper.dmg"
             target="_blank"
             rel="noopener noreferrer"

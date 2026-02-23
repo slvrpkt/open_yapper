@@ -54,16 +54,14 @@ async function main() {
     destination: STORAGE_PATH,
     metadata: {
       contentType: "application/octet-stream",
-      metadata: {
-        contentDisposition: 'attachment; filename="Open Yapper.dmg"',
-      },
+      contentDisposition: 'attachment; filename="Open Yapper.dmg"',
     },
   });
 
   const file = bucket.file(STORAGE_PATH);
   await file.makePublic();
 
-  const publicUrl = `https://storage.googleapis.com/${PROJECT_ID}.appspot.com/${STORAGE_PATH}`;
+  const publicUrl = `https://storage.googleapis.com/${projectId}.appspot.com/${STORAGE_PATH}`;
   console.log("\nUpload complete! Add this to your .env.local:\n");
   console.log(`NEXT_PUBLIC_DOWNLOAD_URL=${publicUrl}\n`);
 }

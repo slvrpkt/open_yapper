@@ -363,7 +363,7 @@ class MaterialTheme {
           displayColor: colorScheme.onSurface,
         ),
         textSelectionTheme: TextSelectionThemeData(
-          cursorColor: primaryText,
+          cursorColor: colorScheme.primary,
           selectionColor: accentLime,
           selectionHandleColor: accentLime,
         ),

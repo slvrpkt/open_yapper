@@ -1,4 +1,8 @@
 export function Navbar() {
+  const downloadUrl =
+    process.env.NEXT_PUBLIC_DOWNLOAD_URL ||
+    "https://github.com/Matinrahimik/open_yapper/releases/latest/download/open_yapper.dmg";
+
   return (
     <nav className="fixed inset-x-0 top-0 z-50 flex h-[73px] w-full items-center justify-between border-b-2 border-[#0A0A0A] bg-[#F4F4F0] px-6 md:px-12">
       <div className="flex flex-1 items-center justify-start" aria-hidden />
@@ -11,7 +15,7 @@ export function Navbar() {
       </a>
       <div className="hidden flex-1 items-center justify-end lg:flex">
         <a
-          href="https://github.com/Matinrahimik/open_yapper/releases/latest/download/open_yapper.dmg"
+          href={downloadUrl}
           download="Open Yapper.dmg"
           target="_blank"
           rel="noopener noreferrer"

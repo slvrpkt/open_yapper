@@ -89,7 +89,7 @@ export function DemoSection() {
             cleanup. Your raw thoughts turn into polished text you can paste
             wherever you are working.
           </p>
-          <ul className="mt-10 flex flex-col gap-4">
+          <ul className="mt-10 flex w-full flex-col items-start gap-4">
             {[
               "Bring your own API key",
               "Ramble Naturally",
@@ -97,7 +97,7 @@ export function DemoSection() {
               "Paste anywhere that you are working",
             ].map(
               (step, i) => (
-                <li key={i} className="flex items-center justify-center gap-4 lg:justify-start">
+                <li key={i} className="flex items-center justify-start gap-4">
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#0A0A0A] text-sm font-bold text-[#D4FF00]">
                     {i + 1}
                   </span>

@@ -1,25 +1,14 @@
 #!/bin/bash
 #
 # Sign and notarize Open Yapper for macOS distribution.
-# Requires: Apple Developer Program ($99/year) + Developer ID Application certificate
-#
-# Setup:
-# 1. Enroll at https://developer.apple.com/programs/
-# 2. Create Developer ID Application certificate in Xcode/Keychain
-# 3. Create App-Specific Password at https://appleid.apple.com
-# 4. Set env vars:
-#    export APPLE_ID="your@email.com"
-#    export APP_SPECIFIC_PASSWORD="xxxx-xxxx-xxxx-xxxx"
-#    export DEVELOPER_ID="Developer ID Application: Your Name (TEAMID)"
-#    export TEAM_ID="YOUR_TEAM_ID"  # 10-char ID from developer.apple.com
-#
 # Usage: ./scripts/sign-and-notarize-macos.sh
 
-set -e
+set -euo pipefail
 
-APP_NAME="open yapper"
+APP_NAME="Open Yapper"
 APP_PATH="build/macos/Build/Products/Release/${APP_NAME}.app"
-BUNDLE_ID="com.matin.openYapper"
+DMG_OUT="open_yapper.dmg"
+GITHUB_FALLBACK_URL="https://github.com/Matinrahimik/open_yapper/releases/latest/download/open_yapper.dmg"
 
 # Check env
 if [ -z "$APPLE_ID" ] || [ -z "$APP_SPECIFIC_PASSWORD" ] || [ -z "$DEVELOPER_ID" ] || [ -z "$TEAM_ID" ]; then
@@ -34,6 +23,12 @@ if [ -z "$APPLE_ID" ] || [ -z "$APP_SPECIFIC_PASSWORD" ] || [ -z "$DEVELOPER_ID"
   exit 1
 fi
 
+if [[ "$DEVELOPER_ID" != Developer\ ID\ Application:* ]]; then
+  echo "Error: DEVELOPER_ID must start with 'Developer ID Application:'"
+  echo "Current value: $DEVELOPER_ID"
+  exit 1
+fi
+
 # Build
 echo "Building..."
 flutter build macos --release
@@ -45,33 +40,43 @@ fi
 
 # Sign
 echo "Signing..."
-codesign --deep --force --verbose --timestamp --sign "$DEVELOPER_ID" "$APP_PATH"
-codesign --verify --deep --strict --verbose=2 "$APP_PATH" && echo "Signature OK"
+codesign --deep --force --options runtime --timestamp --verbose --sign "$DEVELOPER_ID" "$APP_PATH"
+codesign --verify --deep --strict --verbose=2 "$APP_PATH"
+# Expected to be "Unnotarized Developer ID" until the notarization step completes.
+if spctl -a -vv "$APP_PATH"; then
+  echo "Gatekeeper accepted app pre-notarization."
+else
+  echo "Gatekeeper pre-check reports unnotarized app (expected before notarization). Continuing..."
+fi
+echo "App signature OK"
 
-# Create DMG for notarization (Apple requires zip or dmg)
-echo "Creating archive for notarization..."
-cd build/macos/Build/Products/Release
-ditto -c -k --keepParent "${APP_NAME}.app" "${APP_NAME}.zip"
-cd - > /dev/null
+# Create DMG
+echo "Creating DMG..."
+rm -f "$DMG_OUT"
+hdiutil create -volname "Open Yapper" -srcfolder "$APP_PATH" -ov -format UDZO "$DMG_OUT"
+
+# Sign DMG (recommended so Gatekeeper can assess container cleanly)
+echo "Signing DMG..."
+codesign --force --timestamp --verbose --sign "$DEVELOPER_ID" "$DMG_OUT"
+codesign --verify --strict --verbose=2 "$DMG_OUT"
+echo "DMG signature OK"
 
 # Notarize
 echo "Submitting for notarization..."
-xcrun notarytool submit "build/macos/Build/Products/Release/${APP_NAME}.zip" \
+xcrun notarytool submit "$DMG_OUT" \
   --apple-id "$APPLE_ID" \
   --password "$APP_SPECIFIC_PASSWORD" \
   --team-id "$TEAM_ID" \
   --wait
 
 echo "Notarization complete. Stapling..."
-xcrun stapler staple "$APP_PATH"
-xcrun stapler validate "$APP_PATH" && echo "Staple OK"
-
-# Create final DMG
-echo "Creating DMG..."
-DMG_OUT="open_yapper.dmg"
-rm -f "$DMG_OUT"
-hdiutil create -volname "Open Yapper" -srcfolder "$APP_PATH" -ov -format UDZO "$DMG_OUT"
+xcrun stapler staple "$DMG_OUT"
+xcrun stapler validate "$DMG_OUT"
+spctl -a -vv -t open --context context:primary-signature "$DMG_OUT"
+echo "Notarization ticket stapled and validated"
 
 echo ""
-echo "Done! Signed and notarized: $DMG_OUT"
-echo "Upload this to GitHub Releases - users won't see the malware warning."
+echo "Done! Signed + notarized artifact: $DMG_OUT"
+echo "Upload this DMG to GitHub Releases or Firebase Storage."
+echo "If using Firebase Storage, set NEXT_PUBLIC_DOWNLOAD_URL to that URL."
+echo "If not set, website falls back to: $GITHUB_FALLBACK_URL"

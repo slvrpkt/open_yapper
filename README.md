@@ -138,7 +138,7 @@ open_yapper/
 
 ## License
 
-See [LICENSE](LICENSE) for details.
+This project is licensed under the **Apache License 2.0**.
 
 ---
 

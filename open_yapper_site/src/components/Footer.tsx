@@ -3,6 +3,10 @@
 import { ArrowRight, Github, Heart } from "lucide-react";
 import { motion } from "motion/react";
 
+const DOWNLOAD_URL =
+  process.env.NEXT_PUBLIC_DOWNLOAD_URL ||
+  "https://github.com/Matinrahimik/open_yapper/releases/latest/download/open_yapper.dmg";
+
 export function Footer() {
   return (
     <footer className="bg-[#0A0A0A] px-6 py-20 md:px-12">
@@ -16,7 +20,7 @@ export function Footer() {
           </h2>
           <div className="flex flex-col items-center gap-4 sm:flex-row">
             <motion.a
-              href="https://github.com/Matinrahimik/open_yapper/releases/latest/download/open_yapper.dmg"
+              href={DOWNLOAD_URL}
               download="Open Yapper.dmg"
               target="_blank"
               rel="noopener noreferrer"
