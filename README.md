@@ -207,4 +207,4 @@ This project is licensed under the **Apache License 2.0**.
 
 ---
 
-**Open Yapper** — The GEN Z voice dictation app. Stop typing, start talking. 🎤
+**Open Yapper** — The GEN Z voice dictation app. Stop typing, start yapping. 🎤
