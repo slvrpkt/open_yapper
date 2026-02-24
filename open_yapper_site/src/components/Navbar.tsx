@@ -1,3 +1,7 @@
+"use client";
+
+import { trackCtaClick } from "@/utils/analytics";
+
 export function Navbar() {
   const DOWNLOAD_URL =
     "https://github.com/Matinrahimik/open_yapper/releases/latest/download/open_yapper.dmg";
@@ -17,6 +21,7 @@ export function Navbar() {
           href={DOWNLOAD_URL}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={() => trackCtaClick("download_click", "navbar")}
           className="flex items-center gap-2 rounded-2xl border-2 border-[#0A0A0A] bg-white px-6 py-2.5 font-semibold text-[#0A0A0A] shadow-[4px_4px_0_0_#0A0A0A] transition-all hover:-translate-y-0.5 hover:bg-[#EFEFE8] hover:shadow-[6px_6px_0_0_#0A0A0A]"
         >
           <svg

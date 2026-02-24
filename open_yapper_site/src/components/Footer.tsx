@@ -2,6 +2,7 @@
 
 import { ArrowRight, Github, Heart } from "lucide-react";
 import { motion } from "motion/react";
+import { trackCtaClick } from "@/utils/analytics";
 
 const DOWNLOAD_URL =
   "https://github.com/Matinrahimik/open_yapper/releases/latest/download/open_yapper.dmg";
@@ -23,6 +24,7 @@ export function Footer() {
               download="Open Yapper.dmg"
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => trackCtaClick("download_click", "footer")}
               className="flex items-center gap-2 rounded-2xl border-2 border-[#D4FF00] bg-[#0A0A0A] px-8 py-4 text-base font-bold uppercase text-[#D4FF00] shadow-[6px_6px_0_0_#D4FF00] transition-all hover:-translate-y-1 hover:shadow-[8px_8px_0_0_#D4FF00] md:text-lg"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -35,6 +37,7 @@ export function Footer() {
               href="https://github.com/Matinrahimik/open_yapper"
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => trackCtaClick("github_click", "footer")}
               className="flex items-center gap-2 rounded-2xl border-2 border-[#F4F4F0] bg-[#0A0A0A] px-8 py-4 text-base font-bold uppercase text-[#F4F4F0] shadow-[6px_6px_0_0_#F4F4F0] transition-all hover:-translate-y-1 hover:shadow-[8px_8px_0_0_#F4F4F0] md:text-lg"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}

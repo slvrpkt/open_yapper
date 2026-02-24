@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
+import { trackCtaClick } from "@/utils/analytics";
 
 const DOWNLOAD_URL =
   "https://github.com/Matinrahimik/open_yapper/releases/latest/download/open_yapper.dmg";
@@ -57,6 +58,7 @@ export function HeroSection() {
             download="Open Yapper.dmg"
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => trackCtaClick("download_click", "hero")}
             className="flex items-center gap-2 rounded-2xl border-2 border-[#0A0A0A] bg-[#D4FF00] px-5 py-2.5 text-sm font-medium uppercase tracking-[0.08em] text-[#0A0A0A] shadow-[5px_5px_0_0_#0A0A0A] transition-all hover:-translate-y-1 hover:shadow-[7px_7px_0_0_#0A0A0A] sm:px-6 sm:py-3 sm:text-base md:px-8 md:py-4 md:text-lg"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
@@ -95,6 +97,7 @@ export function HeroSection() {
             href="https://github.com/Matinrahimik/open_yapper"
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => trackCtaClick("github_click", "hero")}
             className="flex items-center gap-2 rounded-2xl border-2 border-[#0A0A0A] bg-[#0A0A0A] px-5 py-2.5 text-sm font-medium uppercase tracking-[0.08em] text-[#F4F4F0] shadow-[5px_5px_0_0_#D4FF00] transition-all hover:-translate-y-1 hover:shadow-[7px_7px_0_0_#D4FF00] sm:px-6 sm:py-3 sm:text-base md:px-8 md:py-4 md:text-lg"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
