@@ -40,8 +40,10 @@ Stop typing, start talking. Speak into your mic, and Open Yapper transcribes you
 
 **Website:** [www.openyapper.com](https://www.openyapper.com)
 
-The website is currently the landing page only.  
-The macOS prebuilt app is temporarily unavailable, so please clone this repository and build your own release (`flutter build macos --release`) using the guide above.
+The website is currently the landing page only.
+
+For the easiest install, use the prebuilt DMG from this repository's GitHub Releases:
+- `open_yapper-v1.0.0.dmg`
 
 ---
 
@@ -49,9 +51,14 @@ The macOS prebuilt app is temporarily unavailable, so please clone this reposito
 
 If you want Open Yapper on your computer like a normal app (without opening Cursor/IDE every time), follow this:
 
-### macOS download status
+### macOS quick install (recommended)
 
-The macOS prebuilt download is currently unavailable on the website.
+1. Download `open_yapper-v1.0.0.dmg` from this repository's GitHub Releases page
+2. Open the DMG
+3. Drag `Open Yapper.app` into your **Applications** folder
+4. Launch **Open Yapper** from Applications
+
+This is the easiest path for non-technical users.
 
 ### Build your own installable app from this repo (macOS)
 
