@@ -57,6 +57,8 @@ The macOS prebuilt download is currently unavailable on the website.
 
 Use this if you want your own personal build from source code.
 
+This repository is configured so local macOS release builds do not require your own Apple Developer signing certificate.
+
 1. Clone this repository:
 
 ```bash
