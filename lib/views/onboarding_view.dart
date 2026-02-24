@@ -85,9 +85,7 @@ class _OnboardingViewState extends State<OnboardingView> {
 
   Future<void> _openMicrophoneSettings() async {
     const urls = [
-      'x-apple.systemsettings:com.apple.preference.security?Privacy_Microphone',
       'x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone',
-      'x-apple.systemsettings:',
     ];
     // Try native first, then URL fallbacks for different macOS versions.
     try {
@@ -101,9 +99,7 @@ class _OnboardingViewState extends State<OnboardingView> {
 
   Future<void> _openAccessibilitySettings() async {
     const urls = [
-      'x-apple.systemsettings:com.apple.preference.security?Privacy_Accessibility',
       'x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility',
-      'x-apple.systemsettings:',
     ];
     try {
       await NativeBridge.instance.openAccessibilitySettings();

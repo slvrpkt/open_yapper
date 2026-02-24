@@ -238,11 +238,8 @@ class NativeChannelHandler: NSObject {
     }
 
     private func openSystemSettings(pane: String, result: @escaping FlutterResult) {
-        // macOS 13+ uses x-apple.systemsettings; older macOS used x-apple.systempreferences.
-        // Try newer format first — the old URL can return true from NSWorkspace without
-        // actually navigating to the correct pane on macOS 13+.
+        // Use the registered scheme to avoid macOS showing an app-picker dialog.
         let urlStrings = [
-            "x-apple.systemsettings:com.apple.preference.security?\(pane)",
             "x-apple.systempreferences:com.apple.preference.security?\(pane)",
         ]
         for raw in urlStrings {

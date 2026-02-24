@@ -54,6 +54,9 @@ Open Terminal and run:
 ```bash
 cd /Users/matinrahimi/CursorProjects/open_yapper
 
+# Optional but recommended: polished drag-to-Applications DMG layout
+brew install create-dmg
+
 # Set your credentials (replace with your actual values)
 export APPLE_ID="matinrahimik@gmail.com"
 export APP_SPECIFIC_PASSWORD="xxxx-xxxx-xxxx-xxxx"

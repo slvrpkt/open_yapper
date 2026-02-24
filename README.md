@@ -40,29 +40,37 @@ Stop typing, start talking. Speak into your mic, and Open Yapper transcribes you
 
 **Website:** [www.openyapper.com](https://www.openyapper.com)
 
-The website is currently the landing page only.
+The website now includes the official **Download Open Yapper** button and is the recommended place to get the app.
 
-For the easiest install, use the prebuilt DMG from this repository's GitHub Releases:
-- `open_yapper-v1.0.0.dmg`
+It points to the latest stable macOS DMG from GitHub Releases (`open_yapper.dmg`), so users should download from the website first.
 
 ---
 
-## Non-Technical Setup (Install It Once, Use It Anytime)
+## Non-Technical Setup (Recommended)
 
-If you want Open Yapper on your computer like a normal app (without opening Cursor/IDE every time), follow this:
+If you want Open Yapper installed like a normal app (no IDE required), follow this:
 
-### macOS quick install (recommended)
+### macOS quick install
 
-1. Download `open_yapper-v1.0.0.dmg` from this repository's GitHub Releases page
-2. Open the DMG
-3. Drag `Open Yapper.app` into your **Applications** folder
-4. Launch **Open Yapper** from Applications
+1. Go to [www.openyapper.com](https://www.openyapper.com)
+2. Click **Download Open Yapper**
+3. Open the DMG
+4. Drag `Open Yapper.app` into your **Applications** folder
+5. Launch **Open Yapper** from Applications
 
-This is the easiest path for non-technical users.
+This is the easiest path for non-technical users and always gives the latest public build.
 
-### Build your own installable app from this repo (macOS)
+### First launch checklist
 
-Use this if you want your own personal build from source code.
+- Allow **Microphone** permission
+- Allow **Accessibility** permission (for pasting into other apps)
+- Paste your Gemini API key in onboarding (or later in Settings)
+
+---
+
+## Technical Setup (Optional: Build from Source)
+
+Use this only if you want to build your own local macOS app bundle from source code.
 
 This repository is configured so local macOS release builds do not require your own Apple Developer signing certificate.
 
@@ -96,12 +104,6 @@ build/macos/Build/Products/Release/
 
 5. Drag `Open Yapper.app` into **Applications**
 6. Launch from Applications from now on (no IDE needed)
-
-### First launch checklist
-
-- Allow **Microphone** permission
-- Allow **Accessibility** permission (for pasting into other apps)
-- Paste your Gemini API key in onboarding (or later in Settings)
 
 ### How to update later
 

@@ -7,6 +7,7 @@ set -euo pipefail
 
 APP_NAME="Open Yapper"
 APP_PATH="build/macos/Build/Products/Release/${APP_NAME}.app"
+ENTITLEMENTS_PATH="macos/Runner/Release.entitlements"
 DMG_OUT="open_yapper.dmg"
 NOTARY_WAIT_MODE="${NOTARY_WAIT_MODE:-wait}" # wait | nowait
 RELEASE_VERSION="$(awk -F ': ' '/^version:/{print $2}' pubspec.yaml | tr -d '\r')"
@@ -15,6 +16,12 @@ RELEASE_TAG="v${RELEASE_VERSION_BASE}"
 VERSIONED_DMG_OUT="open_yapper-${RELEASE_TAG}.dmg"
 SPARKLE_ARCHIVE_OUT="open_yapper-${RELEASE_TAG}.zip"
 GITHUB_FALLBACK_URL="https://github.com/Matinrahimik/open_yapper/releases/latest/download/open_yapper.dmg"
+DMG_STAGING_DIR="$(mktemp -d -t open_yapper_dmg.XXXXXX)"
+
+cleanup() {
+  rm -rf "$DMG_STAGING_DIR"
+}
+trap cleanup EXIT
 
 # Check env
 if [ -z "$APPLE_ID" ] || [ -z "$APP_SPECIFIC_PASSWORD" ] || [ -z "$DEVELOPER_ID" ] || [ -z "$TEAM_ID" ]; then
@@ -50,10 +57,20 @@ if [ ! -d "$APP_PATH" ]; then
   exit 1
 fi
 
+if [ ! -f "$ENTITLEMENTS_PATH" ]; then
+  echo "Error: Entitlements file not found at $ENTITLEMENTS_PATH"
+  exit 1
+fi
+
 # Sign
 echo "Signing..."
-codesign --deep --force --options runtime --timestamp --verbose --sign "$DEVELOPER_ID" "$APP_PATH"
+codesign --deep --force --options runtime --timestamp --entitlements "$ENTITLEMENTS_PATH" --verbose --sign "$DEVELOPER_ID" "$APP_PATH"
 codesign --verify --deep --strict --verbose=2 "$APP_PATH"
+# Ensure microphone entitlement is present after signing.
+if ! codesign -d --entitlements :- "$APP_PATH" 2>/dev/null | grep -q "com.apple.security.device.audio-input"; then
+  echo "Error: Missing com.apple.security.device.audio-input entitlement after signing."
+  exit 1
+fi
 # Expected to be "Unnotarized Developer ID" until the notarization step completes.
 if spctl -a -vv "$APP_PATH"; then
   echo "Gatekeeper accepted app pre-notarization."
@@ -65,7 +82,32 @@ echo "App signature OK"
 # Create DMG
 echo "Creating DMG..."
 rm -f "$DMG_OUT"
-hdiutil create -volname "Open Yapper" -srcfolder "$APP_PATH" -ov -format UDZO "$DMG_OUT"
+rm -rf "$DMG_STAGING_DIR"
+mkdir -p "$DMG_STAGING_DIR"
+ditto "$APP_PATH" "$DMG_STAGING_DIR/${APP_NAME}.app"
+
+if command -v create-dmg >/dev/null 2>&1; then
+  echo "Using create-dmg for drag-to-Applications installer layout..."
+  CREATE_DMG_HELP="$(create-dmg --help 2>&1 || true)"
+  CREATE_DMG_ARGS=(
+    --volname "Open Yapper"
+    --window-pos 200 120
+    --window-size 640 420
+    --icon-size 128
+    --icon "${APP_NAME}.app" 180 220
+    --hide-extension "${APP_NAME}.app"
+    --app-drop-link 460 220
+  )
+  # Some create-dmg versions support --overwrite and some don't.
+  if [[ "$CREATE_DMG_HELP" == *"--overwrite"* ]]; then
+    CREATE_DMG_ARGS=(--overwrite "${CREATE_DMG_ARGS[@]}")
+  fi
+  create-dmg "${CREATE_DMG_ARGS[@]}" "$DMG_OUT" "$DMG_STAGING_DIR"
+else
+  echo "create-dmg not found. Building basic DMG with Applications shortcut (install: brew install create-dmg for polished layout)."
+  ln -s /Applications "$DMG_STAGING_DIR/Applications"
+  hdiutil create -volname "Open Yapper" -srcfolder "$DMG_STAGING_DIR" -ov -format UDZO "$DMG_OUT"
+fi
 cp "$DMG_OUT" "$VERSIONED_DMG_OUT"
 
 # Create Sparkle archive (recommended for appcast generation)
@@ -116,6 +158,11 @@ spctl -a -vv -t open --context context:primary-signature "$DMG_OUT"
 xcrun stapler staple "$VERSIONED_DMG_OUT"
 xcrun stapler validate "$VERSIONED_DMG_OUT"
 echo "Notarization ticket stapled and validated"
+
+echo "Running release preflight checks..."
+./scripts/release-preflight.sh --app "$APP_PATH" --dmg "$DMG_OUT" --bundle-id "com.matin.openYapper"
+./scripts/release-preflight.sh --app "$APP_PATH" --dmg "$VERSIONED_DMG_OUT" --bundle-id "com.matin.openYapper"
+echo "Release preflight checks passed"
 
 echo ""
 echo "Done! Signed + notarized artifacts:"

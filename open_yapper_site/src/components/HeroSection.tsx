@@ -2,6 +2,9 @@
 
 import { motion } from "motion/react";
 
+const DOWNLOAD_URL =
+  "https://github.com/Matinrahimik/open_yapper/releases/latest/download/open_yapper.dmg";
+
 export function HeroSection() {
   return (
     <section
@@ -49,7 +52,7 @@ export function HeroSection() {
         </p>
 
         <div className="mt-12 flex flex-col items-center gap-4 sm:flex-row">
-          {/* <motion.a
+          <motion.a
             href={DOWNLOAD_URL}
             download="Open Yapper.dmg"
             target="_blank"
@@ -86,7 +89,7 @@ export function HeroSection() {
               />
             </svg>
             Download Open Yapper
-          </motion.a> */}
+          </motion.a>
 
           <motion.a
             href="https://github.com/Matinrahimik/open_yapper"
