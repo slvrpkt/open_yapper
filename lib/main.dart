@@ -7,7 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'screens/customization_screen.dart';
 import 'screens/dictionary_screen.dart';
 import 'screens/history_screen.dart';
-// import 'screens/home_screen.dart'; // Commented out - History is main page
+import 'screens/home_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/stats_screen.dart';
 import 'screens/user_info_screen.dart';
@@ -106,6 +106,7 @@ class MainApp extends StatelessWidget {
 }
 
 enum RailDestination {
+  home,
   history,
   dictionary,
   userInfo,
@@ -135,6 +136,26 @@ class AppSidebar extends StatelessWidget {
         indicatorColor: colorScheme.primary,
         groupAlignment: 0.0,
         destinations: [
+          NavigationRailDestination(
+            icon: IconTheme(
+              data: IconThemeData(color: colorScheme.onSurfaceVariant),
+              child: const Tooltip(
+                message: 'Record',
+                child: Icon(Symbols.mic),
+              ),
+            ),
+            selectedIcon: IconTheme(
+              data: IconThemeData(color: colorScheme.surface),
+              child: const Tooltip(
+                message: 'Record',
+                child: Icon(Symbols.mic, fill: 1),
+              ),
+            ),
+            label: Text(
+              'Record',
+              style: Theme.of(context).textTheme.labelLarge,
+            ),
+          ),
           NavigationRailDestination(
             icon: IconTheme(
               data: IconThemeData(color: colorScheme.onSurfaceVariant),
@@ -283,7 +304,7 @@ class _MainScaffoldState extends State<MainScaffold> {
     owner: 'Matinrahimik',
     repo: 'open_yapper',
   );
-  RailDestination _selectedDestination = RailDestination.history;
+  RailDestination _selectedDestination = RailDestination.home;
   bool _hasCheckedLaunchUpdates = false;
 
   @override
@@ -385,6 +406,9 @@ class _MainScaffoldState extends State<MainScaffold> {
                     children: [
                       Expanded(
                         child: switch (_selectedDestination) {
+                          RailDestination.home => HomeScreen(
+                            recordingService: widget.recordingService,
+                          ),
                           RailDestination.history => HistoryScreen(
                             historyService: widget.historyService,
                           ),

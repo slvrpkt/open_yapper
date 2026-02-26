@@ -83,7 +83,10 @@ class RecordingService extends ChangeNotifier {
     if (_isProcessing) return 'Processing with Gemini...';
     if (_isPasteSuccess) return 'Pasted successfully!';
     if (_lastError != null) return 'Error — see details below';
-    return 'Ready — Press ⌥ Space to record';
+    if (Platform.isMacOS) {
+      return 'Ready — Press ⌥ Space to record';
+    }
+    return 'Ready — Click "Start Recording"';
   }
 
   Future<void> _init() async {
@@ -133,7 +136,9 @@ class RecordingService extends ChangeNotifier {
       return;
     }
 
-    if (!_accessibilityGranted) {
+    // On macOS we require Accessibility for global hotkeys/paste. On other
+    // platforms this is a no-op.
+    if (Platform.isMacOS && !_accessibilityGranted) {
       _lastError = 'Please grant Accessibility permission first.';
       notifyListeners();
       return;
@@ -141,16 +146,33 @@ class RecordingService extends ChangeNotifier {
 
     try {
       final dir = await getTemporaryDirectory();
-      final path =
-          '${dir.path}/openyapper_${DateTime.now().millisecondsSinceEpoch}.m4a';
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
 
-      await _recorder.start(
-        const RecordConfig(
+      // Windows has stricter media format requirements via MediaFoundation.
+      // Use WAV on Windows and AAC/M4A elsewhere to avoid
+      // "media type is invalid or not supported" errors.
+      late final String path;
+      late final RecordConfig config;
+
+      if (Platform.isWindows) {
+        path = '${dir.path}/openyapper_$timestamp.wav';
+        config = const RecordConfig(
+          encoder: AudioEncoder.wav,
+          sampleRate: 44100,
+          numChannels: 1,
+        );
+      } else {
+        path = '${dir.path}/openyapper_$timestamp.m4a';
+        config = const RecordConfig(
           encoder: AudioEncoder.aacLc,
           sampleRate: 16000,
           numChannels: 1,
           bitRate: 64000,
-        ),
+        );
+      }
+
+      await _recorder.start(
+        config,
         path: path,
       );
 

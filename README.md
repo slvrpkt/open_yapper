@@ -60,6 +60,69 @@ If you want Open Yapper installed like a normal app (no IDE required), follow th
 
 This is the easiest path for non-technical users and always gives the latest public build.
 
+### Windows (build-your-own) install
+
+There isn’t a pre-built Windows installer yet, but you can build a native `.exe` locally and use it fully offline (aside from Gemini API calls):
+
+1. Install Flutter with Windows desktop support using the official guide:  
+   `https://docs.flutter.dev/get-started/install/windows`
+2. From this repo folder, install dependencies:
+
+   ```powershell
+   flutter pub get
+   ```
+
+3. Build the Windows release binary:
+
+   ```powershell
+   flutter build windows --release
+   ```
+
+4. After the build finishes, your portable app lives here:
+
+   ```text
+   build/windows/x64/runner/Release/
+   ```
+
+   Inside that folder you’ll see `open_yapper.exe` plus the required DLLs and `data` directory. You can:
+
+   - Run `open_yapper.exe` directly, or
+   - Zip the entire `Release` folder and move it to another Windows machine for offline use.
+
+5. On first launch on Windows, go to **Settings → Gemini API Key** and paste your Gemini API key.  
+   It will be stored locally (via app preferences) and reused on future launches.
+
+On Windows, advanced macOS-only features like Accessibility-based global hotkeys and overlay UI are limited; recording, Gemini processing, history, stats, and text expansion still work, and processed text is copied to your clipboard so you can paste it where you need.
+
+### Windows one-click installer (`OpenYapperSetup.exe`)
+
+To generate a single-click installer `.exe` for Windows:
+
+1. Build the Windows release (as above):
+
+   ```powershell
+   flutter build windows --release
+   ```
+
+2. Install **Inno Setup** from `https://jrsoftware.org/isinfo.php`.
+
+3. From the repo root, compile the installer script:
+
+   ```powershell
+   "C:\Program Files (x86)\Inno Setup 6\iscc.exe" open_yapper_windows.iss
+   ```
+
+4. After it compiles, you’ll get:
+
+   ```text
+   OpenYapperSetup.exe
+   ```
+
+   in the repo root. That file is your **one-click installer**:
+
+   - Double-click `OpenYapperSetup.exe` on any Windows machine to install Open Yapper to `C:\Program Files\Open Yapper`.
+   - You can upload this `OpenYapperSetup.exe` to GitHub Releases or any hosting service and share the download link.
+
 ### First launch checklist
 
 - Allow **Microphone** permission

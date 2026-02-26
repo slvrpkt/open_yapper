@@ -1,7 +1,24 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/services.dart';
 
 class NativeBridge {
   static const _channel = MethodChannel('com.openyapper/native');
+
+  static bool get _isMacOS => Platform.isMacOS;
+
+  static Future<T?> _invokeOptional<T>(
+    String method, [
+    dynamic arguments,
+  ]) async {
+    if (!_isMacOS) return null;
+    try {
+      return await _channel.invokeMethod<T>(method, arguments);
+    } on MissingPluginException {
+      // Gracefully degrade when the native side isn't implemented (e.g. Windows).
+      return null;
+    }
+  }
 
   static final NativeBridge instance = NativeBridge._();
   NativeBridge._();
@@ -67,7 +84,7 @@ class NativeBridge {
     required bool stopEnabled,
     required bool holdEnabled,
   }) async {
-    await _channel.invokeMethod('setHotkeyConfig', {
+    await _invokeOptional<void>('setHotkeyConfig', {
       'startKeyCode': startKeyCode,
       'startFlags': startFlags,
       'stopKeyCode': stopKeyCode,
@@ -83,9 +100,13 @@ class NativeBridge {
   /// Capture the next key press and return keyCode and flags.
   /// Used when remapping hotkeys in settings.
   Future<Map<String, int>> captureNextHotkey() async {
-    final result = await _channel.invokeMethod<Map<dynamic, dynamic>>(
-      'captureNextHotkey',
-    );
+    if (!_isMacOS) {
+      throw UnsupportedError(
+        'Hotkey capture is only supported on macOS at the moment.',
+      );
+    }
+    final result =
+        await _invokeOptional<Map<dynamic, dynamic>>('captureNextHotkey');
     if (result == null) {
       throw Exception('Failed to capture hotkey');
     }
@@ -96,34 +117,41 @@ class NativeBridge {
   }
 
   Future<void> startHotkeyListener() async {
-    await _channel.invokeMethod('startHotkeyListener');
+    await _invokeOptional<void>('startHotkeyListener');
   }
 
   Future<void> stopHotkeyListener() async {
-    await _channel.invokeMethod('stopHotkeyListener');
+    await _invokeOptional<void>('stopHotkeyListener');
   }
 
   Future<void> setStopHotkeyEnabled(bool enabled) async {
-    await _channel.invokeMethod('setStopHotkeyEnabled', {'enabled': enabled});
+    await _invokeOptional<void>(
+      'setStopHotkeyEnabled',
+      {'enabled': enabled},
+    );
   }
 
   Future<void> pasteText(String text, {bool restoreClipboard = true}) async {
-    await _channel.invokeMethod('pasteText', {
+    if (!_isMacOS) {
+      // On non-macOS platforms, fall back to copying the text to the clipboard.
+      await Clipboard.setData(ClipboardData(text: text));
+      return;
+    }
+    await _invokeOptional<void>('pasteText', {
       'text': text,
       'restoreClipboard': restoreClipboard,
     });
   }
 
   Future<String?> getFrontmostAppName() async {
-    return await _channel.invokeMethod<String>('getFrontmostAppName');
+    if (!_isMacOS) return 'Default';
+    return await _invokeOptional<String>('getFrontmostAppName');
   }
 
   /// Returns list of installed apps with name and base64 PNG icon.
   /// Each map: {name: String, path: String, iconBase64: String}
   Future<List<Map<String, dynamic>>> getInstalledApps() async {
-    final result = await _channel.invokeMethod<List<dynamic>>(
-      'getInstalledApps',
-    );
+    final result = await _invokeOptional<List<dynamic>>('getInstalledApps');
     if (result == null) return [];
     return result
         .map(
@@ -136,33 +164,47 @@ class NativeBridge {
   }
 
   Future<bool> checkAccessibility() async {
-    return await _channel.invokeMethod<bool>('checkAccessibility') ?? false;
+    if (!_isMacOS) {
+      // Windows and other platforms don't use macOS Accessibility APIs.
+      return true;
+    }
+    return await _invokeOptional<bool>('checkAccessibility') ?? true;
   }
 
   Future<bool> requestAccessibility() async {
-    return await _channel.invokeMethod<bool>('requestAccessibility') ?? false;
+    if (!_isMacOS) {
+      // Nothing to request on non-macOS; treat as granted.
+      return true;
+    }
+    return await _invokeOptional<bool>('requestAccessibility') ?? true;
   }
 
   Future<bool> checkMicrophonePermission() async {
-    return await _channel.invokeMethod<bool>('checkMicrophonePermission') ??
-        false;
+    if (!_isMacOS) {
+      // The record plugin manages microphone permissions on other platforms.
+      return true;
+    }
+    return await _invokeOptional<bool>('checkMicrophonePermission') ?? true;
   }
 
   Future<void> openAccessibilitySettings() async {
-    await _channel.invokeMethod('openAccessibilitySettings');
+    if (!_isMacOS) return;
+    await _invokeOptional<void>('openAccessibilitySettings');
   }
 
   Future<void> openMicrophoneSettings() async {
-    await _channel.invokeMethod('openMicrophoneSettings');
+    if (!_isMacOS) return;
+    await _invokeOptional<void>('openMicrophoneSettings');
   }
 
   /// Restart the app (needed after granting Accessibility - macOS doesn't detect it until restart).
   Future<void> restartApp() async {
-    await _channel.invokeMethod('restartApp');
+    if (!_isMacOS) return;
+    await _invokeOptional<void>('restartApp');
   }
 
   Future<void> showRecordingOverlay() async {
-    await _channel.invokeMethod('showRecordingOverlay');
+    await _invokeOptional<void>('showRecordingOverlay');
   }
 
   Future<void> updateOverlayState(
@@ -173,33 +215,41 @@ class NativeBridge {
     final args = <String, dynamic>{'state': state};
     if (charCount != null) args['charCount'] = charCount;
     if (duration != null) args['duration'] = duration;
-    await _channel.invokeMethod('updateOverlayState', args);
+    await _invokeOptional<void>('updateOverlayState', args);
   }
 
   Future<void> updateOverlayLevel(double level) async {
-    await _channel.invokeMethod('updateOverlayLevel', {'level': level});
+    await _invokeOptional<void>('updateOverlayLevel', {'level': level});
   }
 
   Future<void> updateOverlayDuration(double duration) async {
-    await _channel.invokeMethod('updateOverlayDuration', {
-      'duration': duration,
-    });
+    await _invokeOptional<void>(
+      'updateOverlayDuration',
+      {'duration': duration},
+    );
   }
 
   Future<void> dismissRecordingOverlay() async {
-    await _channel.invokeMethod('dismissRecordingOverlay');
+    await _invokeOptional<void>('dismissRecordingOverlay');
   }
 
   Future<void> keychainSave(String key, String value) async {
-    await _channel.invokeMethod('keychainSave', {'key': key, 'value': value});
+    await _invokeOptional<void>(
+      'keychainSave',
+      {'key': key, 'value': value},
+    );
   }
 
   Future<String?> keychainLoad(String key) async {
-    return await _channel.invokeMethod<String>('keychainLoad', {'key': key});
+    return await _invokeOptional<String>(
+      'keychainLoad',
+      {'key': key},
+    );
   }
 
   /// Trigger native updater UI (Sparkle on macOS).
   Future<void> checkForNativeUpdates() async {
-    await _channel.invokeMethod('checkForNativeUpdates');
+    if (!_isMacOS) return;
+    await _invokeOptional<void>('checkForNativeUpdates');
   }
 }

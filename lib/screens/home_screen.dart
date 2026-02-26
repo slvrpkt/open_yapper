@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:material_symbols_icons/symbols.dart';
@@ -138,13 +140,22 @@ class _RecordingContent extends StatelessWidget {
                     style: theme.textTheme.titleLarge,
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    'Press ⌥ Space anywhere to start recording',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant.withValues(
-                        alpha: 0.5,
-                      ),
-                    ),
+                  Builder(
+                    builder: (context) {
+                      final isMacOS = Platform.isMacOS;
+                      final hint = isMacOS
+                          ? 'Press ⌥ Space anywhere to start recording'
+                          : 'Click "Start Recording" below, then paste the result where you need it.';
+                      return Text(
+                        hint,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant.withValues(
+                            alpha: 0.5,
+                          ),
+                        ),
+                        textAlign: TextAlign.center,
+                      );
+                    },
                   ),
                   const SizedBox(height: 32),
                   if (recordingService.lastError != null) ...[
