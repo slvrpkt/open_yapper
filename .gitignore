@@ -46,3 +46,4 @@ app.*.map.json
 
 # Local environment secrets
 open_yapper_site/.env.local
+OpenYapperSetup.exe
